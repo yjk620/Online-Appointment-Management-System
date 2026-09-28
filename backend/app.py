@@ -3,6 +3,7 @@ from pathlib import Path
 
 from flask import Flask, jsonify
 
+from auth_routes import auth_bp
 from database import connect, init_db
 
 
@@ -17,6 +18,8 @@ def create_app(test_config=None):
 
     with app.app_context():
         init_db()
+
+    app.register_blueprint(auth_bp)
 
     @app.get("/api/health")
     def health():
