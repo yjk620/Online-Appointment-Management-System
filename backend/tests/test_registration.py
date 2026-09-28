@@ -1,3 +1,4 @@
+from contextlib import closing
 import sqlite3
 import sys
 import tempfile
@@ -29,7 +30,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(response.json["email"], "sam@example.com")
         self.assertEqual(response.json["role"], "client")
         self.assertNotIn("password", response.json)
-        with sqlite3.connect(self.database) as connection:
+        with closing(sqlite3.connect(self.database)) as connection, connection:
             row = connection.execute(
                 "SELECT email, password_hash, role FROM users"
             ).fetchone()
@@ -45,7 +46,7 @@ class RegistrationTest(unittest.TestCase):
         response = self.client.post("/api/register", json=payload)
         self.assertEqual(response.status_code, 409)
         self.assertIn("already exists", response.json["error"])
-        with sqlite3.connect(self.database) as connection:
+        with closing(sqlite3.connect(self.database)) as connection, connection:
             count = connection.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         self.assertEqual(count, 1)
 
