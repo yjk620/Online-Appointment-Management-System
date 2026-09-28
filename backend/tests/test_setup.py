@@ -1,3 +1,4 @@
+from contextlib import closing
 import sqlite3
 import sys
 import tempfile
@@ -16,7 +17,7 @@ class SetupTest(unittest.TestCase):
             response = app.test_client().get("/api/health")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json, {"status": "ok", "database": "ok"})
-            with sqlite3.connect(database_path) as connection:
+            with closing(sqlite3.connect(database_path)) as connection, connection:
                 tables = {
                     row[0]
                     for row in connection.execute(

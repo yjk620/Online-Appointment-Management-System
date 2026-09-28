@@ -1,16 +1,25 @@
 import os
 import sqlite3
+import secrets
+from datetime import timedelta
 from contextlib import closing
 from pathlib import Path
 
-from flask import Flask, jsonify, request
-from werkzeug.security import generate_password_hash
+from flask import Flask, jsonify, request, session
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from database import connect, init_db
 
 
 def create_app(test_config=None):
     app = Flask(__name__)
+    app.config.update(
+        SECRET_KEY=os.environ.get("APPOINTMENTS_SECRET_KEY") or secrets.token_hex(32),
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=os.environ.get("APPOINTMENTS_COOKIE_SECURE") == "1",
+        PERMANENT_SESSION_LIFETIME=timedelta(hours=8),
+    )
     app.config["DATABASE"] = os.environ.get(
         "APPOINTMENTS_DATABASE",
         str(Path(__file__).with_name("appointments.db")),
@@ -21,9 +30,52 @@ def create_app(test_config=None):
     with app.app_context():
         init_db()
 
+    @app.before_request
+    def protect_auth_requests():
+        # JSON plus a custom header prevents cross-origin form submissions.
+        if request.path in ("/api/login", "/api/logout") and request.method == "POST":
+            if not request.is_json or request.headers.get("X-Requested-With") != "AppointmentDesk":
+                return jsonify(error="Invalid request."), 400
+
+    def public_user(user):
+        return {key: user[key] for key in ("id", "name", "email", "role")}
+
+    @app.post("/api/login")
+    def login():
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify(error="Enter your email and password."), 400
+        email, password = data.get("email"), data.get("password")
+        if not isinstance(email, str) or not isinstance(password, str) or not email.strip() or not password:
+            return jsonify(error="Enter your email and password."), 400
+        with closing(connect()) as connection:
+            user = connection.execute("SELECT * FROM users WHERE email = ?", (email.strip().lower(),)).fetchone()
+        if user is None or not check_password_hash(user["password_hash"], password):
+            return jsonify(error="Invalid email or password."), 401
+        session.clear()
+        session["user_id"] = user["id"]
+        session.permanent = True
+        return jsonify(user=public_user(user))
+
+    @app.get("/api/session")
+    def current_session():
+        with closing(connect()) as connection:
+            user = connection.execute("SELECT * FROM users WHERE id = ?", (session.get("user_id"),)).fetchone()
+        if user is None:
+            session.clear()
+            return jsonify(error="Please sign in."), 401
+        response = jsonify(user=public_user(user))
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @app.post("/api/logout")
+    def logout():
+        session.clear()
+        return jsonify(message="Signed out.")
+
     @app.get("/api/health")
     def health():
-        with connect() as connection:
+        with closing(connect()) as connection:
             connection.execute("SELECT 1").fetchone()
         return jsonify(status="ok", database="ok")
 

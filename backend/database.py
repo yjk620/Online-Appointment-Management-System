@@ -1,3 +1,4 @@
+from contextlib import closing
 import sqlite3
 from pathlib import Path
 
@@ -14,6 +15,6 @@ def connect():
 def init_db():
     database_path = Path(current_app.config["DATABASE"])
     database_path.parent.mkdir(parents=True, exist_ok=True)
-    with connect() as connection:
+    with closing(connect()) as connection:
         schema_path = Path(__file__).with_name("schema.sql")
         connection.executescript(schema_path.read_text(encoding="utf-8"))
