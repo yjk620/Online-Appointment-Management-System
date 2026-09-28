@@ -13,6 +13,7 @@ def create_app(test_config=None):
         "APPOINTMENTS_DATABASE",
         str(Path(__file__).with_name("appointments.db")),
     )
+    app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
     if test_config:
         app.config.update(test_config)
 
