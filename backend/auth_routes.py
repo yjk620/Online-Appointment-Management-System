@@ -65,3 +65,22 @@ def login():
 def logout():
     session.clear()
     return "", 204
+
+
+@auth_bp.get("/me")
+def me():
+    user_id = session.get("user_id")
+    if user_id is None:
+        return jsonify(error="not logged in"), 401
+
+    with connect() as connection:
+        user = connection.execute(
+            "SELECT id, name, email, role FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+
+    if user is None:
+        session.clear()
+        return jsonify(error="not logged in"), 401
+
+    return jsonify(id=user["id"], name=user["name"], email=user["email"], role=user["role"])
