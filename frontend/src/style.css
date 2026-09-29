@@ -49,3 +49,5 @@ main a:hover { text-decoration-color: currentColor; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+select { width: 100%; padding: 0.75rem; font: inherit; border: 1px solid #aaa; border-radius: 6px; background: white; color: #202020; }

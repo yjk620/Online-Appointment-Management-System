@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
+import Booking from './Booking'
 
 type User = { id: number; name: string; email: string; role: 'client' | 'provider' | 'admin' }
 const homes = { client: '/client', provider: '/provider', admin: '/admin' }
@@ -110,7 +111,7 @@ export default function App() {
             <h1>{user.role === 'admin' ? 'Admin' : user.role === 'provider' ? 'Provider' : 'Client'} home</h1>
             <p>Welcome, {user.name}.</p>
             <p>You are signed in as {user.email}.</p>
-            <p>{user.role === 'client' ? 'Provider browsing and appointment booking are coming next.' : user.role === 'provider' ? 'Availability and appointment management are coming next.' : 'Account administration is coming next.'}</p>
+            {user.role === 'client' ? <Booking /> : <p>{user.role === 'provider' ? 'Availability and appointment management are coming next.' : 'Account administration is coming next.'}</p>}
             {error && <p role="alert">{error}</p>}
             <button disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button>
           </>
