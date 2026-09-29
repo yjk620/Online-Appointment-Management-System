@@ -29,7 +29,7 @@ class ProviderSeedTest(unittest.TestCase):
         with closing(sqlite3.connect(self.database)) as db:
             return db.execute(sql).fetchall()
 
-    def test_at_least_four_advisors_can_sign_in_as_providers(self):
+    def test_at_least_four_providers_can_sign_in(self):
         result = self.seed()
         self.assertEqual(result.exit_code, 0, result.output)
         self.assertGreaterEqual(len(DEMO_PROVIDERS), 4)
@@ -41,7 +41,7 @@ class ProviderSeedTest(unittest.TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.json["user"]["role"], "provider")
 
-    def test_each_advisor_has_distinct_future_availability(self):
+    def test_each_provider_has_distinct_future_availability(self):
         self.seed()
         now = datetime.now(timezone.utc)
         schedules = {}
@@ -51,7 +51,7 @@ class ProviderSeedTest(unittest.TestCase):
         self.assertEqual(len(schedules), len(DEMO_PROVIDERS))
         self.assertEqual(len({frozenset(times) for times in schedules.values()}), len(schedules))
 
-    def test_advisors_appear_in_client_directory_data(self):
+    def test_providers_appear_in_client_directory_data(self):
         self.seed()
         with closing(sqlite3.connect(self.database)) as db, db:
             db.execute("INSERT INTO users(name,email,password_hash,role) VALUES('C','c@example.com','x','client')")

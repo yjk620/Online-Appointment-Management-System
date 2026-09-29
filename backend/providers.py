@@ -1,4 +1,4 @@
-"""Demo advisors with working logins and distinct availability (#22).
+"""Demo providers with working logins and distinct availability (#22).
 
 The provider directory screen (#5) reads GET /api/booking/options, so this
 module adds no HTTP routes.
@@ -14,21 +14,21 @@ from database import connect
 
 providers = Blueprint("providers", __name__)
 
-DEMO_PASSWORD = "advisor-demo-2026"
+DEMO_PASSWORD = "provider-demo-2026"
 
 # (name, email, description, indexes into the next six weekdays, UTC start hours)
 DEMO_PROVIDERS = (
     ("Alex Morgan", "alex.morgan@example.invalid",
-     "Academic advising: course selection, prerequisites and degree planning.",
+     "Academic planning: course selection, prerequisites and degree requirements.",
      (0, 2, 4), (13, 14)),
     ("Priya Shah", "priya.shah@example.invalid",
-     "Career advising: co-op, internships and resume reviews.",
+     "Career services: co-op, internships and resume reviews.",
      (1, 3), (17, 18)),
     ("Sofia Rossi", "sofia.rossi@example.invalid",
-     "Financial aid advising: bursaries, scholarships and budgeting.",
+     "Financial aid: bursaries, scholarships and budgeting.",
      (0, 1, 2, 3, 4), (20,)),
     ("Omar Haddad", "omar.haddad@example.invalid",
-     "Student success advising: study skills and academic recovery plans.",
+     "Student success: study skills and academic recovery plans.",
      (5,), (15, 16, 17)),
 )
 
@@ -46,7 +46,7 @@ def upcoming_weekdays(count):
 
 @providers.cli.command("seed-demo")
 def seed_demo():
-    """Add four demo advisors with profiles, logins and distinct 30-minute slots."""
+    """Add four demo providers with profiles, logins and distinct 30-minute slots."""
     weekdays = upcoming_weekdays(6)
     with closing(connect()) as db, db:
         for name, email, description, day_indexes, hours in DEMO_PROVIDERS:
@@ -68,6 +68,6 @@ def seed_demo():
                         "INSERT OR IGNORE INTO availability(provider_id,starts_at,ends_at) VALUES(?,?,?)",
                         (user["id"], start.isoformat(), (start + timedelta(minutes=30)).isoformat()),
                     )
-    click.echo(f"Demo advisors ready. Sign in with password {DEMO_PASSWORD} as:")
+    click.echo(f"Demo providers ready. Sign in with password {DEMO_PASSWORD} as:")
     for _, email, *_ in DEMO_PROVIDERS:
         click.echo(f"  {email}")
