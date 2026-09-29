@@ -1,0 +1,9 @@
+.provider-list { list-style: none; padding: 0; display: grid; gap: 12px; }
+.provider-list button { display: grid; gap: 6px; padding: 14px 16px; text-align: left; background: #fff; color: #1d1d1f; border: 1px solid #d4d4d2; border-radius: 12px; font-weight: 400; }
+.provider-list button:hover { background: #f2f5f3; }
+.provider-list strong { font-size: 16px; font-weight: 600; }
+.provider-list span { color: #626264; font-size: 13px; line-height: 1.5; }
+.provider-details { margin: 16px 0; padding: 16px; border: 1px solid #d4d4d2; border-radius: 12px; }
+.provider-details h3 { margin: 0 0 12px; }
+.provider-details p { margin: 8px 0; }
+.provider-details button { margin-top: 12px; }
