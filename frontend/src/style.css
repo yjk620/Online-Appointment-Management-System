@@ -68,3 +68,12 @@ form .calendar-help { font-size: 12px; line-height: 1.5; margin: 12px 0 0; }
 .booking-review p { margin-bottom: 12px; }
 
 .calendar-navigation button:disabled { cursor: not-allowed; }
+
+.appointment-list { list-style: none; padding: 0; display: grid; gap: 12px; }
+.appointment-list li { border: 1px solid #d4d4d2; border-radius: 12px; padding: 16px; }
+.appointment-list h3 { margin: 0 0 12px; }
+.appointment-list p { margin: 8px 0; }
+
+.section-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; padding: 14px 16px; background: #f2f5f3; color: #203c2b; border: 1px solid #d4d4d2; font-size: 18px; }
+.section-toggle:hover { background: #e5ede8; }
+[hidden] { display: none !important; }

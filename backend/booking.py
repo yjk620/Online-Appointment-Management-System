@@ -21,7 +21,7 @@ def client_only(view):
         if g.client is None:
             return jsonify(error="Please sign in."), 401
         if g.client["role"] != "client":
-            return jsonify(error="Only clients can book appointments."), 403
+            return jsonify(error="This feature is available to clients only."), 403
         return view(*args, **kwargs)
     return wrapped
 
@@ -50,6 +50,21 @@ def options():
         providers = db.execute("SELECT u.id, u.name, p.description FROM users u JOIN provider_profiles p ON p.user_id=u.id WHERE u.role='provider' ORDER BY u.name,u.id").fetchall()
         slots = db.execute("SELECT a.* FROM availability a JOIN users u ON u.id=a.provider_id JOIN provider_profiles p ON p.user_id=u.id WHERE u.role='provider' AND NOT EXISTS (SELECT 1 FROM appointments b WHERE b.availability_id=a.id AND b.status!='cancelled') ORDER BY julianday(a.starts_at),a.id").fetchall()
     return jsonify(providers=[dict(p) for p in providers], slots=[dict(s) for s in slots if future_slot(s["starts_at"])])
+
+
+@booking.get("/api/appointments")
+@client_only
+def upcoming_appointments():
+    with closing(connect()) as db:
+        rows = db.execute(
+            "SELECT b.id, u.name AS provider_name, a.starts_at, a.ends_at, b.status "
+            "FROM appointments b JOIN availability a ON a.id=b.availability_id "
+            "JOIN users u ON u.id=a.provider_id "
+            "WHERE b.client_id=? AND b.status='scheduled' "
+            "ORDER BY julianday(a.starts_at), b.id",
+            (g.client["id"],),
+        ).fetchall()
+    return jsonify(appointments=[dict(row) for row in rows if future_slot(row["starts_at"])])
 
 
 @booking.post("/api/appointments")
