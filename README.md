@@ -112,3 +112,15 @@ The calendar can navigate forward through empty months. Previous navigation stop
 at the current local month. Changing provider/month/date clears the chosen slot;
 selecting a time shows a review summary before the POST is submitted. Dates with
 no available slots remain disabled. An empty month shows a clear empty state.
+
+## Upcoming appointments (#8)
+
+Client home lists the signed-in client's future scheduled appointments, ordered
+by start time. Each card shows provider, local date/time, status and confirmation
+number. Past, cancelled, completed and no-show appointments are excluded. The list
+refreshes after a booking, on page load, and with Refresh appointments. Failures
+show a retry action rather than claiming the user has no appointments.
+
+`GET /api/appointments` uses the session's client ID; query parameters cannot select
+another client's records. It shares booking's client guard and no-store policy.
+The #4 integration guidance above applies to this GET endpoint too. Booking PR #28 is merged; this feature branch is based on that updated main.

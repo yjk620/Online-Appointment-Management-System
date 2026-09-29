@@ -1,11 +1,13 @@
 import { FormEvent, useEffect, useState } from 'react'
 import Booking from './Booking'
+import UpcomingAppointments from './UpcomingAppointments'
 
 type User = { id: number; name: string; email: string; role: 'client' | 'provider' | 'admin' }
 const homes = { client: '/client', provider: '/provider', admin: '/admin' }
 const authHeaders = { 'Content-Type': 'application/json', 'X-Requested-With': 'AppointmentDesk' }
 
 export default function App() {
+  const [appointmentsVersion, setAppointmentsVersion] = useState(0)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -111,7 +113,7 @@ export default function App() {
             <h1>{user.role === 'admin' ? 'Admin' : user.role === 'provider' ? 'Provider' : 'Client'} home</h1>
             <p>Welcome, {user.name}.</p>
             <p>You are signed in as {user.email}.</p>
-            {user.role === 'client' ? <Booking /> : <p>{user.role === 'provider' ? 'Availability and appointment management are coming next.' : 'Account administration is coming next.'}</p>}
+            {user.role === 'client' ? <><UpcomingAppointments refreshVersion={appointmentsVersion} /><Booking onBooked={() => setAppointmentsVersion(version => version + 1)} /></> : <p>{user.role === 'provider' ? 'Availability and appointment management are coming next.' : 'Account administration is coming next.'}</p>}
             {error && <p role="alert">{error}</p>}
             <button disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button>
           </>

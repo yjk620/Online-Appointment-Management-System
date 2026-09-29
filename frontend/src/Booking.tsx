@@ -16,7 +16,7 @@ function dayKey(date: Date) {
 }
 function monthStart(date: Date) { return new Date(date.getFullYear(), date.getMonth(), 1) }
 
-export default function Booking() {
+export default function Booking({ onBooked }: { onBooked: () => void }) {
   const [providers, setProviders] = useState<Provider[]>([])
   const [slots, setSlots] = useState<Slot[]>([])
   const [provider, setProvider] = useState('')
@@ -78,6 +78,7 @@ export default function Booking() {
         return
       }
       setConfirmed(result.appointment)
+      onBooked()
       setSlots(current => current.filter(item => item.id !== Number(slot)))
       setSlot('')
     } catch { setError('Could not confirm the booking. Refresh available times before retrying.') }
