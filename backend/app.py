@@ -11,12 +11,14 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from database import connect, init_db
 from booking import booking
 from providers import providers
+from admin import admin
 
 
 def create_app(test_config=None):
     app = Flask(__name__)
     app.register_blueprint(booking)
     app.register_blueprint(providers)
+    app.register_blueprint(admin)
     app.config.update(
         SECRET_KEY=os.environ.get("APPOINTMENTS_SECRET_KEY") or secrets.token_hex(32),
         SESSION_COOKIE_HTTPONLY=True,
@@ -53,9 +55,15 @@ def create_app(test_config=None):
         if not isinstance(email, str) or not isinstance(password, str) or not email.strip() or not password:
             return jsonify(error="Enter your email and password."), 400
         with closing(connect()) as connection:
-            user = connection.execute("SELECT * FROM users WHERE email = ?", (email.strip().lower(),)).fetchone()
+            user = connection.execute(
+                "SELECT u.*, p.user_id IS NOT NULL AS pending FROM users u "
+                "LEFT JOIN pending_providers p ON p.user_id = u.id WHERE u.email = ?",
+                (email.strip().lower(),),
+            ).fetchone()
         if user is None or not check_password_hash(user["password_hash"], password):
             return jsonify(error="Invalid email or password."), 401
+        if user["pending"]:
+            return jsonify(error="Your provider account is waiting for admin approval."), 403
         session.clear()
         session["user_id"] = user["id"]
         session.permanent = True
@@ -92,6 +100,7 @@ def create_app(test_config=None):
         name = data.get("name")
         email = data.get("email")
         password = data.get("password")
+        account_type = data.get("account_type", "client")
         if not all(isinstance(value, str) for value in (name, email, password)):
             return jsonify(error="Enter your name, email, and password."), 400
 
@@ -103,19 +112,26 @@ def create_app(test_config=None):
             return jsonify(error="Enter a valid email address."), 400
         if len(password) < 8:
             return jsonify(error="Password must be at least 8 characters."), 400
+        if account_type not in ("client", "provider"):
+            return jsonify(error="Choose a client or provider account."), 400
 
         with closing(connect()) as connection:
             try:
                 cursor = connection.execute(
-                    "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'client')",
-                    (name, email, generate_password_hash(password)),
+                    "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
+                    (name, email, generate_password_hash(password), account_type),
                 )
+                if account_type == "provider":
+                    connection.execute("INSERT INTO pending_providers (user_id) VALUES (?)", (cursor.lastrowid,))
                 connection.commit()
             except sqlite3.IntegrityError:
                 connection.rollback()
                 return jsonify(error="An account with this email already exists."), 409
 
-        return jsonify(id=cursor.lastrowid, name=name, email=email, role="client"), 201
+        return jsonify(
+            id=cursor.lastrowid, name=name, email=email, role=account_type,
+            pending_approval=account_type == "provider",
+        ), 201
 
     return app
 
