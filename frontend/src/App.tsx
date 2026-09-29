@@ -2,6 +2,8 @@ import { FormEvent, useEffect, useState } from 'react'
 import Booking from './Booking'
 import UpcomingAppointments from './UpcomingAppointments'
 import Providers from './Providers'
+import AccountTypeField, { type AccountType } from './AccountTypeField'
+import ProviderApplications from './ProviderApplications'
 
 type User = { id: number; name: string; email: string; role: 'client' | 'provider' | 'admin' }
 const homes = { client: '/client', provider: '/provider', admin: '/admin' }
@@ -14,6 +16,7 @@ export default function App() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [accountType, setAccountType] = useState<AccountType>('client')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [user, setUser] = useState<User | null>(null)
@@ -88,14 +91,14 @@ export default function App() {
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, account_type: accountType }),
       })
-      const result = (await response.json()) as { error?: string }
+      const result = (await response.json()) as { error?: string; pending_approval?: boolean }
       if (!response.ok) {
         setError(result.error ?? 'Registration failed. Please try again.')
         return
       }
-      window.location.assign('/login?registered=1')
+      window.location.assign(result.pending_approval ? '/login?pending=1' : '/login?registered=1')
     } catch {
       setError('Could not connect to the server. Please try again.')
     } finally {
@@ -104,6 +107,7 @@ export default function App() {
   }
 
   const justRegistered = new URLSearchParams(window.location.search).has('registered')
+  const pendingApproval = new URLSearchParams(window.location.search).has('pending')
 
   return (
     <>
@@ -116,14 +120,14 @@ export default function App() {
             <h1>{user.role === 'admin' ? 'Admin' : user.role === 'provider' ? 'Provider' : 'Client'} home</h1>
             <p>Welcome, {user.name}.</p>
             <p>You are signed in as {user.email}.</p>
-            {user.role === 'client' ? <><UpcomingAppointments refreshVersion={appointmentsVersion} expanded={upcomingOpen} onToggle={() => setUpcomingOpen(open => !open)} /><Providers refreshVersion={appointmentsVersion} /><Booking expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} /></> : <p>{user.role === 'provider' ? 'Availability and appointment management are coming next.' : 'Account administration is coming next.'}</p>}
+            {user.role === 'client' ? <><UpcomingAppointments refreshVersion={appointmentsVersion} expanded={upcomingOpen} onToggle={() => setUpcomingOpen(open => !open)} /><Providers refreshVersion={appointmentsVersion} /><Booking expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} /></> : user.role === 'admin' ? <ProviderApplications /> : <p>Availability and appointment management are coming next.</p>}
             {error && <p role="alert">{error}</p>}
             <button disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button>
           </>
         ) : onDashboard ? <p role="status">Redirecting to sign in…</p> : onLoginPage ? (
           <>
-            <h1>{justRegistered ? "You're all set." : 'Welcome back.'}</h1>
-            <p>{justRegistered ? 'Your account is ready. Sign in to continue.' : 'Sign in to your account.'}</p>
+            <h1>{pendingApproval ? 'Application received.' : justRegistered ? "You're all set." : 'Welcome back.'}</h1>
+            <p>{pendingApproval ? 'An admin needs to approve your provider account before you can sign in.' : justRegistered ? 'Your account is ready. Sign in to continue.' : 'Sign in to your account.'}</p>
             <form onSubmit={submitLogin}>
               <p><label htmlFor="email">Email address</label><br />
                 <input id="email" name="email" type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required /></p>
@@ -137,7 +141,7 @@ export default function App() {
         ) : (
           <>
             <h1>Create your account</h1>
-            <p>Register to book appointments.</p>
+            <p>Register to book appointments, or to offer them as a provider.</p>
             <form onSubmit={submitRegistration}>
               <p>
                 <label htmlFor="name">Full name</label><br />
@@ -151,6 +155,7 @@ export default function App() {
                 <label htmlFor="password">Password</label><br />
                 <input id="password" name="password" type="password" autoComplete="new-password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} required />
               </p>
+              <AccountTypeField value={accountType} onChange={setAccountType} />
               {error && <p role="alert">{error}</p>}
               <button type="submit" disabled={submitting}>{submitting ? 'Creating account…' : 'Create account'}</button>
             </form>

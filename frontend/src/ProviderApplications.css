@@ -1,0 +1,8 @@
+.application-list { list-style: none; padding: 0; display: grid; gap: 12px; }
+.application-list li { border: 1px solid #d4d4d2; border-radius: 12px; padding: 16px; }
+.application-list h3 { margin: 0 0 8px; }
+.application-list p { margin: 4px 0; color: #626264; font-size: 14px; }
+.application-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.application-actions .reject { background: #fff; color: #922d2d; border: 1px solid #d9b3b3; }
+.application-actions .reject:hover { background: #fbebeb; }
+.provider-applications { margin-bottom: 16px; }
