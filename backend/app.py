@@ -8,6 +8,7 @@ from pathlib import Path
 from flask import Flask, jsonify, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from auth_routes import auth_bp
 from database import connect, init_db
 from booking import booking
 
@@ -26,11 +27,13 @@ def create_app(test_config=None):
         "APPOINTMENTS_DATABASE",
         str(Path(__file__).with_name("appointments.db")),
     )
+    app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
     if test_config:
         app.config.update(test_config)
 
     with app.app_context():
         init_db()
+
 
     @app.before_request
     def protect_auth_requests():
