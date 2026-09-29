@@ -29,6 +29,7 @@ export default function Booking() {
   const [confirmed, setConfirmed] = useState<Appointment | null>(null)
   async function load() {
     setLoading(true)
+    setSlot('')
     try {
       const response = await fetch('/api/booking/options', { cache: 'no-store' })
       if (response.status === 401) { window.location.replace('/login'); return }
@@ -36,7 +37,7 @@ export default function Booking() {
       const result = (await response.json()) as { providers: Provider[]; slots: Slot[] }
       setProviders(result.providers)
       setSlots(result.slots)
-    } catch (error) { setError(error instanceof Error ? error.message : 'Could not load options.') }
+    } catch (error) { setSlots([]); setError(error instanceof Error ? error.message : 'Could not load options.') }
     finally { setLoading(false) }
   }
   useEffect(() => { void load() }, [])
@@ -48,17 +49,14 @@ export default function Booking() {
   const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
   const monthLabel = month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
   const earliestMonth = monthStart(new Date())
-  const latestMonth = available.reduce((latest, item) => {
-    const candidate = monthStart(slotDate(item.starts_at))
-    return candidate > latest ? candidate : latest
-  }, earliestMonth)
   function chooseProvider(value: string) {
     setProvider(value); setSlot(''); setDay(''); setConfirmed(null); setError('')
     const next = slots.filter(item => item.provider_id === Number(value)).sort((a, b) => slotDate(a.starts_at).getTime() - slotDate(b.starts_at).getTime())[0]
     setMonth(monthStart(next ? slotDate(next.starts_at) : new Date()))
   }
   function moveMonth(offset: number) {
-    setMonth(new Date(month.getFullYear(), month.getMonth() + offset, 1))
+    const target = new Date(month.getFullYear(), month.getMonth() + offset, 1)
+    setMonth(target < earliestMonth ? earliestMonth : target)
     setDay(''); setSlot('')
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -102,7 +100,7 @@ export default function Booking() {
           <div className="calendar-navigation">
             <button type="button" aria-label="Previous month" disabled={busy || month <= earliestMonth} onClick={() => moveMonth(-1)}>Previous</button>
             <strong aria-live="polite">{monthLabel}</strong>
-            <button type="button" aria-label="Next month" disabled={busy || month >= latestMonth} onClick={() => moveMonth(1)}>Next</button>
+            <button type="button" aria-label="Next month" disabled={busy} onClick={() => moveMonth(1)}>Next</button>
           </div>
           <div className="calendar-days" role="group" aria-label={`Available dates in ${monthLabel}`}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(label => <span className="weekday" key={label} aria-hidden="true">{label}</span>)}
@@ -118,7 +116,7 @@ export default function Booking() {
           </div>
           <p className="calendar-help">Only dates with available appointments can be selected.</p>
         </div>
-        {available.length === 0 && <p>No available times for this provider.</p>}
+        {!available.some(item => { const date = slotDate(item.starts_at); return date.getFullYear() === month.getFullYear() && date.getMonth() === month.getMonth() }) && <p>No available appointments this month. Try another month or provider.</p>}
         {day && <div role="group" aria-label="Available times">
           <h3>Choose a time</h3>
           <div className="booking-times">{dailySlots.map(item => <button key={item.id} type="button" disabled={busy}
