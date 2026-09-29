@@ -2,7 +2,7 @@ import sqlite3
 
 from flask import Blueprint, jsonify, request, session
 
-from auth import VALID_ROLES, hash_password, verify_password
+from auth import VALID_ROLES, get_session_user, hash_password, verify_password
 from database import connect
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
@@ -69,18 +69,7 @@ def logout():
 
 @auth_bp.get("/me")
 def me():
-    user_id = session.get("user_id")
-    if user_id is None:
-        return jsonify(error="not logged in"), 401
-
-    with connect() as connection:
-        user = connection.execute(
-            "SELECT id, name, email, role FROM users WHERE id = ?",
-            (user_id,),
-        ).fetchone()
-
+    user = get_session_user()
     if user is None:
-        session.clear()
         return jsonify(error="not logged in"), 401
-
     return jsonify(id=user["id"], name=user["name"], email=user["email"], role=user["role"])
