@@ -35,3 +35,8 @@ CREATE INDEX IF NOT EXISTS idx_appointments_client
 CREATE UNIQUE INDEX IF NOT EXISTS idx_active_appointment_slot
     ON appointments(availability_id)
     WHERE status != 'cancelled';
+
+CREATE TABLE IF NOT EXISTS pending_providers (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    requested_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+);
