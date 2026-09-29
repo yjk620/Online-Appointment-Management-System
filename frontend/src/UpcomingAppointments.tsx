@@ -5,7 +5,7 @@ function localDate(value: string) {
   return new Date(/(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? value : value.replace(' ', 'T') + 'Z')
 }
 
-export default function UpcomingAppointments({ refreshVersion }: { refreshVersion: number }) {
+export default function UpcomingAppointments({ refreshVersion, expanded, onToggle }: { refreshVersion: number; expanded: boolean; onToggle: () => void }) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -29,7 +29,10 @@ export default function UpcomingAppointments({ refreshVersion }: { refreshVersio
     return () => controller.abort()
   }, [refreshVersion, retry])
   return <section aria-labelledby="upcoming-title">
-    <h2 id="upcoming-title">Upcoming appointments</h2>
+    <h2 id="upcoming-title"><button className="section-toggle" type="button" aria-expanded={expanded} aria-controls="upcoming-content" onClick={onToggle}>
+      <span>Upcoming appointments{!loading && !error ? ` (${appointments.length})` : ''}</span><span aria-hidden="true">{expanded ? '-' : '+'}</span>
+    </button></h2>
+    <div id="upcoming-content" hidden={!expanded}>
     <p>Times are shown in your device's local time zone.</p>
     {loading ? <p role="status">Loading your appointments...</p> : error ? <p role="alert">{error}</p> : appointments.length === 0 ? <p>You have no upcoming appointments. Choose a provider below to book one.</p> :
       <ul className="appointment-list">{appointments.map(item => <li key={item.id}>
@@ -39,5 +42,6 @@ export default function UpcomingAppointments({ refreshVersion }: { refreshVersio
         <p>Status: {item.status}</p><p>Confirmation #{item.id}</p>
       </li>)}</ul>}
     <button disabled={loading} onClick={() => setRetry(value => value + 1)}>{error ? 'Retry appointments' : 'Refresh appointments'}</button>
+    </div>
   </section>
 }

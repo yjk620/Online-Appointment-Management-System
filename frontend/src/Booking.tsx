@@ -16,7 +16,7 @@ function dayKey(date: Date) {
 }
 function monthStart(date: Date) { return new Date(date.getFullYear(), date.getMonth(), 1) }
 
-export default function Booking({ onBooked }: { onBooked: () => void }) {
+export default function Booking({ onBooked, expanded, onToggle }: { onBooked: () => void; expanded: boolean; onToggle: () => void }) {
   const [providers, setProviders] = useState<Provider[]>([])
   const [slots, setSlots] = useState<Slot[]>([])
   const [provider, setProvider] = useState('')
@@ -85,7 +85,10 @@ export default function Booking({ onBooked }: { onBooked: () => void }) {
     finally { setBusy(false) }
   }
   return <section aria-labelledby="booking-title">
-    <h2 id="booking-title">Book an appointment</h2>
+    <h2 id="booking-title"><button className="section-toggle" type="button" aria-expanded={expanded} aria-controls="booking-content" onClick={onToggle}>
+      <span>Book an appointment</span><span aria-hidden="true">{expanded ? '-' : '+'}</span>
+    </button></h2>
+    <div id="booking-content" hidden={!expanded}>
     <p>Times are shown in your device's local time zone.</p>
     {error && <p role="alert">{error}</p>}
     {confirmed && <div role="status"><h3>Appointment booked</h3><p>{confirmed.provider_name}</p><p>{dateLabel(confirmed.starts_at)} - {dateLabel(confirmed.ends_at)}</p><p>Confirmation #{confirmed.id} - {confirmed.status}</p></div>}
@@ -136,5 +139,6 @@ export default function Booking({ onBooked }: { onBooked: () => void }) {
       </div>}
     </form>}
     <p><button disabled={busy || loading} onClick={() => { setError(''); setSlot(''); void load() }}>Refresh available times</button></p>
+    </div>
   </section>
 }
