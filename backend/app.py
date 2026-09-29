@@ -10,11 +10,13 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from database import connect, init_db
 from booking import booking
+from providers import providers
 
 
 def create_app(test_config=None):
     app = Flask(__name__)
     app.register_blueprint(booking)
+    app.register_blueprint(providers)
     app.config.update(
         SECRET_KEY=os.environ.get("APPOINTMENTS_SECRET_KEY") or secrets.token_hex(32),
         SESSION_COOKIE_HTTPONLY=True,
