@@ -156,3 +156,17 @@ taken slot or a past slot returns 409; a slot with another provider or the curre
 slot returns 400. The schema needed no changes (#14): the status column already
 exists, and the partial unique index frees cancelled slots and blocks moving onto a
 booked one. Telling providers about changes is left to #13's appointment list.
+
+## Provider appointment management (#13)
+
+Provider home lists appointments attached to the signed-in provider's availability,
+ordered by date and time. Upcoming scheduled appointments are separated from the
+history of completed, cancelled and no-show records. Client details, time, status
+and confirmation number are displayed. Cancelled and rescheduled appointments are
+therefore visible to the provider after a refresh.
+
+After an appointment starts, its provider can mark it Completed or No-show. Status
+changes are retained in SQLite and the provider cannot view or update appointments
+belonging to another provider. `GET /api/provider/appointments` lists the records;
+`POST /api/provider/appointments/<id>/status` accepts `completed` or `no-show` in a
+JSON `status` field with the `X-Requested-With: AppointmentDesk` header.

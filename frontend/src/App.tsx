@@ -5,6 +5,7 @@ import Providers from './Providers'
 import AccountTypeField, { type AccountType } from './AccountTypeField'
 import ProviderApplications from './ProviderApplications'
 import ProviderAvailability from './ProviderAvailability'
+import ProviderAppointments from './ProviderAppointments'
 
 type User = { id: number; name: string; email: string; role: 'client' | 'provider' | 'admin' }
 const homes = { client: '/client', provider: '/provider', admin: '/admin' }
@@ -121,7 +122,7 @@ export default function App() {
             <h1>{user.role === 'admin' ? 'Admin' : user.role === 'provider' ? 'Provider' : 'Client'} home</h1>
             <p>Welcome, {user.name}.</p>
             <p>You are signed in as {user.email}.</p>
-            {user.role === 'client' ? <><UpcomingAppointments refreshVersion={appointmentsVersion} expanded={upcomingOpen} onToggle={() => setUpcomingOpen(open => !open)} onChanged={() => setAppointmentsVersion(version => version + 1)} /><Providers refreshVersion={appointmentsVersion} /><Booking refreshVersion={appointmentsVersion} expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} /></> : user.role === 'admin' ? <ProviderApplications /> : <ProviderAvailability />}
+            {user.role === 'client' ? <><UpcomingAppointments refreshVersion={appointmentsVersion} expanded={upcomingOpen} onToggle={() => setUpcomingOpen(open => !open)} onChanged={() => setAppointmentsVersion(version => version + 1)} /><Providers refreshVersion={appointmentsVersion} /><Booking refreshVersion={appointmentsVersion} expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} /></> : user.role === 'admin' ? <ProviderApplications /> : <><ProviderAppointments /><ProviderAvailability /></>}
             {error && <p role="alert">{error}</p>}
             <button disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button>
           </>
