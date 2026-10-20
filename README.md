@@ -2,6 +2,9 @@
 
 CPS714 prototype using React, TypeScript, Flask, and SQLite.
 
+Test cases and manual acceptance checks: [docs/TEST_CASES.md](docs/TEST_CASES.md).
+Appointment management endpoints: [docs/API.md](docs/API.md).
+
 ## Run locally
 
 Backend (Python 3):
