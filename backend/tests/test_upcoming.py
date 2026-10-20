@@ -23,7 +23,7 @@ class UpcomingTest(unittest.TestCase):
         self.identify(self.client, 2)
         rows = self.client.get('/api/appointments').json['appointments']
         self.assertEqual(len(rows), 1)
-        self.assertEqual(set(rows[0]), {'id', 'provider_name', 'starts_at', 'ends_at', 'status'})
+        self.assertEqual(set(rows[0]), {'id', 'provider_id', 'provider_name', 'starts_at', 'ends_at', 'status'})
         self.assertEqual(rows[0]['provider_name'], 'provider')
         for status in ('cancelled', 'completed', 'no-show'):
             with closing(sqlite3.connect(self.database)) as db, db:

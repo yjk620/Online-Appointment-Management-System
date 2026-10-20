@@ -12,6 +12,7 @@ from database import connect, init_db
 from booking import booking
 from providers import providers
 from admin import admin
+from availability import availability
 
 
 def create_app(test_config=None):
@@ -19,6 +20,7 @@ def create_app(test_config=None):
     app.register_blueprint(booking)
     app.register_blueprint(providers)
     app.register_blueprint(admin)
+    app.register_blueprint(availability)
     app.config.update(
         SECRET_KEY=os.environ.get("APPOINTMENTS_SECRET_KEY") or secrets.token_hex(32),
         SESSION_COOKIE_HTTPONLY=True,
