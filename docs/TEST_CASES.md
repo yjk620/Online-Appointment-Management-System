@@ -24,6 +24,7 @@ Each test uses a temporary SQLite database. No real accounts or bookings are use
 | Booking | #6, #7 | Book available slot; reject past/missing/taken slots, exactly one concurrent winner | `test_booking.py` |
 | Upcoming appointments | #8 | Read own future scheduled bookings in order; exclude other clients and terminal/past records | `test_upcoming.py` |
 | Availability creation | #10, #15 | Add future 30-minute slot; reject overlap, invalid timestamps and unauthorized users | `test_availability.py` |
+| Availability editing | #11 | Edit/remove unused future slots; reject unauthorized users, overlaps and history changes; booking/removal race has one winner | `test_availability_editing.py` (availability PR #38) |
 | Cancel/reschedule | #12, #15 | Change own upcoming scheduled booking; preserve cancellation history and reject occupied/cross-provider targets | `test_modification.py` |
 | Provider appointments | #13, #15 | List only own appointments in time order with client details | `test_appointment_management.py::test_provider_list_and_client_history_are_isolated` |
 | Outcomes/history | #13, #15 | Record Completed/No-show; expose status to client, retain cancelled rows; reject invalid/terminal/future updates | `test_appointment_management.py` |
@@ -45,3 +46,15 @@ future slots plus one past scheduled appointment in a disposable test database.
 
 Record date, tester, build/commit, pass/fail and any defect link when these manual
 cases are run. Browser acceptance results must not be inferred from API tests.
+
+## Verification snapshot - October 19, 2026
+
+- API branch: 61 automated tests passed.
+- Availability branch (#38): 60 automated tests passed.
+- Temporary combined branch (#37, #38, #39): 66 automated tests and the production
+  TypeScript/Vite build passed, with no merge conflicts.
+- Headless Chrome with disposable accounts: provider confirms Completed, client
+  sees Completed/Cancelled history, provider edits and removes an unused slot.
+  These flows passed. Desktop/mobile overflow checks and browser page-error checks passed.
+- Manual keyboard-only navigation, the complete end-to-end acceptance checklist,
+  and a deployment smoke test remain unexecuted.
