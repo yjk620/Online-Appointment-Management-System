@@ -124,3 +124,35 @@ show a retry action rather than claiming the user has no appointments.
 `GET /api/appointments` uses the session's client ID; query parameters cannot select
 another client's records. It shares booking's client guard and no-store policy.
 The #4 integration guidance above applies to this GET endpoint too. Booking PR #28 is merged; this feature branch is based on that updated main.
+
+## Provider availability (#10)
+
+Provider home has a form to add 30-minute slots: pick a date and start time in the
+device's local time zone. The browser sends the start as UTC ISO 8601 and the server
+stores both ends as UTC with an explicit offset. Below the form, providers see their
+own upcoming slots, each marked Open or Booked. New slots appear for clients in
+`/api/booking/options` right away.
+
+`GET /api/provider/availability` lists the signed-in provider's future slots.
+`POST /api/provider/availability` accepts `{"starts_at": "2026-10-22T15:00:00.000Z"}`
+with JSON content type and `X-Requested-With: AppointmentDesk`. A start without a
+time zone offset or in the past returns 400; a slot overlapping one of the
+provider's existing slots returns 409. The overlap check and insert run in one
+`BEGIN IMMEDIATE` transaction, so two requests cannot add overlapping slots. Both
+routes use the `provider_only` guard in `availability.py`; reuse it for #11 and #13.
+
+## Cancel or reschedule (#12)
+
+Each upcoming appointment has Cancel appointment and Reschedule buttons. Cancelling
+asks for confirmation on the page, sets the status to `cancelled` and keeps the row
+as history; the slot becomes bookable again. Rescheduling offers the same provider's
+open times and moves the same appointment, so the confirmation number stays the same
+and the old slot is freed. The booking section reloads after either change.
+
+`POST /api/appointments/<id>/cancel` and `POST /api/appointments/<id>/reschedule`
+(body `{"availability_id": 3}`) need JSON, the custom header and a signed-in client.
+Another client's appointment returns 404; a past or non-scheduled appointment, a
+taken slot or a past slot returns 409; a slot with another provider or the current
+slot returns 400. The schema needed no changes (#14): the status column already
+exists, and the partial unique index frees cancelled slots and blocks moving onto a
+booked one. Telling providers about changes is left to #13's appointment list.

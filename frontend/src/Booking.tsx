@@ -16,7 +16,7 @@ function dayKey(date: Date) {
 }
 function monthStart(date: Date) { return new Date(date.getFullYear(), date.getMonth(), 1) }
 
-export default function Booking({ onBooked, expanded, onToggle }: { onBooked: () => void; expanded: boolean; onToggle: () => void }) {
+export default function Booking({ refreshVersion, onBooked, expanded, onToggle }: { refreshVersion: number; onBooked: () => void; expanded: boolean; onToggle: () => void }) {
   const [providers, setProviders] = useState<Provider[]>([])
   const [slots, setSlots] = useState<Slot[]>([])
   const [provider, setProvider] = useState('')
@@ -40,7 +40,8 @@ export default function Booking({ onBooked, expanded, onToggle }: { onBooked: ()
     } catch (error) { setSlots([]); setError(error instanceof Error ? error.message : 'Could not load options.') }
     finally { setLoading(false) }
   }
-  useEffect(() => { void load() }, [])
+  // Reload when appointments change elsewhere, e.g. a cancellation frees a time.
+  useEffect(() => { void load() }, [refreshVersion])
   const available = slots.filter(item => item.provider_id === Number(provider))
   const selectedSlot = available.find(item => item.id === Number(slot) && dayKey(slotDate(item.starts_at)) === day)
   const daysWithSlots = new Set(available.map(item => dayKey(slotDate(item.starts_at))))

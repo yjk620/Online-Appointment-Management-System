@@ -77,3 +77,14 @@ form .calendar-help { font-size: 12px; line-height: 1.5; margin: 12px 0 0; }
 .section-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; padding: 14px 16px; background: #f2f5f3; color: #203c2b; border: 1px solid #d4d4d2; font-size: 18px; }
 .section-toggle:hover { background: #e5ede8; }
 [hidden] { display: none !important; }
+
+.appointment-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.appointment-actions button { flex: 1 1 140px; min-height: 42px; }
+button.secondary { background: #fff; color: #203c2b; border: 1px solid #a6b9ad; }
+button.secondary:hover { background: #edf3ef; }
+.appointment-change { margin-top: 12px; padding: 12px; border-radius: 10px; background: #f2f6f3; }
+.appointment-change p { margin: 0 0 10px; }
+.appointment-change [role='alert'] { padding: 10px 12px; border-radius: 8px; background: #fbebeb; color: #922d2d; font-size: 13px; }
+.notice { margin: 12px 0; padding: 10px 12px; border-radius: 8px; background: #edf3ef; color: #203c2b; font-size: 14px; }
+.slot-state { display: inline-block; padding: 2px 10px; border-radius: 999px; background: #edf3ef; color: #203c2b; font-size: 13px; font-weight: 600; }
+.slot-state.booked { background: #203c2b; color: #fff; }

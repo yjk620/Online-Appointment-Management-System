@@ -57,7 +57,7 @@ def options():
 def upcoming_appointments():
     with closing(connect()) as db:
         rows = db.execute(
-            "SELECT b.id, u.name AS provider_name, a.starts_at, a.ends_at, b.status "
+            "SELECT b.id, a.provider_id, u.name AS provider_name, a.starts_at, a.ends_at, b.status "
             "FROM appointments b JOIN availability a ON a.id=b.availability_id "
             "JOIN users u ON u.id=a.provider_id "
             "WHERE b.client_id=? AND b.status='scheduled' "
@@ -96,6 +96,71 @@ def book():
             raise
     return jsonify(appointment={"id": cursor.lastrowid, "provider_name": slot["provider_name"], "starts_at": slot["starts_at"], "ends_at": slot["ends_at"], "status": "scheduled"}), 201
 
+
+
+def own_appointment(db, appointment_id):
+    """The signed-in client's appointment with its slot, or None."""
+    return db.execute(
+        "SELECT b.id, b.status, b.availability_id, a.provider_id, a.starts_at FROM appointments b "
+        "JOIN availability a ON a.id=b.availability_id WHERE b.id=? AND b.client_id=?",
+        (appointment_id, g.client["id"]),
+    ).fetchone()
+
+
+@booking.post("/api/appointments/<int:appointment_id>/cancel")
+@client_only
+def cancel(appointment_id):
+    if not request.is_json or request.headers.get("X-Requested-With") != "AppointmentDesk":
+        return jsonify(error="Invalid request."), 400
+    with closing(connect()) as db, db:
+        appointment = own_appointment(db, appointment_id)
+        if appointment is None:
+            return jsonify(error="This appointment was not found."), 404
+        if appointment["status"] != "scheduled" or not future_slot(appointment["starts_at"]):
+            return jsonify(error="Only upcoming scheduled appointments can be cancelled."), 409
+        # The cancelled row stays as history; the partial unique index frees the slot.
+        db.execute("UPDATE appointments SET status='cancelled' WHERE id=?", (appointment_id,))
+    return jsonify(message="Appointment cancelled.")
+
+
+@booking.post("/api/appointments/<int:appointment_id>/reschedule")
+@client_only
+def reschedule(appointment_id):
+    if not request.is_json or request.headers.get("X-Requested-With") != "AppointmentDesk":
+        return jsonify(error="Invalid request."), 400
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or type(data.get("availability_id")) is not int or data["availability_id"] <= 0:
+        return jsonify(error="Select an available time slot."), 400
+    with closing(connect()) as db:
+        try:
+            # Serialize like booking so the new slot cannot be taken between the checks and the update.
+            db.execute("BEGIN IMMEDIATE")
+            appointment = own_appointment(db, appointment_id)
+            if appointment is None:
+                return jsonify(error="This appointment was not found."), 404
+            if appointment["status"] != "scheduled" or not future_slot(appointment["starts_at"]):
+                return jsonify(error="Only upcoming scheduled appointments can be rescheduled."), 409
+            slot = db.execute("SELECT a.*, u.name AS provider_name FROM availability a JOIN users u ON u.id=a.provider_id JOIN provider_profiles p ON p.user_id=u.id WHERE a.id=? AND u.role='provider'", (data["availability_id"],)).fetchone()
+            if slot is None:
+                return jsonify(error="This time slot no longer exists."), 404
+            if slot["provider_id"] != appointment["provider_id"]:
+                return jsonify(error="Choose a new time with the same provider."), 400
+            if slot["id"] == appointment["availability_id"]:
+                return jsonify(error="Choose a different time."), 400
+            if not future_slot(slot["starts_at"]):
+                return jsonify(error="This time slot is no longer available."), 409
+            # Moving the same appointment frees the old slot and keeps the confirmation number.
+            db.execute("UPDATE appointments SET availability_id=? WHERE id=?", (slot["id"], appointment_id))
+            db.commit()
+        except sqlite3.IntegrityError:
+            db.rollback()
+            return jsonify(error="This time slot was just booked. Please choose another."), 409
+        except sqlite3.OperationalError as error:
+            db.rollback()
+            if "locked" in str(error).lower():
+                return jsonify(error="Booking is busy. Please try again."), 503
+            raise
+    return jsonify(appointment={"id": appointment_id, "provider_id": slot["provider_id"], "provider_name": slot["provider_name"], "starts_at": slot["starts_at"], "ends_at": slot["ends_at"], "status": "scheduled"})
 
 @booking.cli.command("seed-demo")
 def seed_demo():
