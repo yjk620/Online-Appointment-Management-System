@@ -99,3 +99,49 @@ def create_slot():
                 return jsonify(error="Saving is busy. Please try again."), 503
             raise
     return jsonify(slot={"id": cursor.lastrowid, **slot, "booked": False}), 201
+
+
+@availability.route('/api/provider/availability/<int:slot_id>', methods=['PATCH', 'DELETE'])
+@provider_only
+def modify_slot(slot_id):
+    if not request.is_json or request.headers.get('X-Requested-With') != 'AppointmentDesk':
+        return jsonify(error='Invalid request.'), 400
+    start = None
+    if request.method == 'PATCH':
+        data = request.get_json(silent=True)
+        start = parse_start(data.get('starts_at')) if isinstance(data, dict) else None
+        if start is None or start <= datetime.now(timezone.utc):
+            return jsonify(error='Choose a valid future time with a time zone.'), 400
+        end = start + SLOT_LENGTH
+    with closing(connect()) as db:
+        try:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT * FROM availability WHERE id=? AND provider_id=?',
+                             (slot_id, g.provider['id'])).fetchone()
+            if row is None:
+                return jsonify(error='This time slot was not found.'), 404
+            if not future_slot(row['starts_at']):
+                return jsonify(error='Only future availability can be changed.'), 409
+            # Preserve the time attached to every historical appointment, too.
+            if db.execute('SELECT 1 FROM appointments WHERE availability_id=?', (slot_id,)).fetchone():
+                return jsonify(error='This slot has appointment history and cannot be changed. Add a new slot instead.'), 409
+            if request.method == 'DELETE':
+                db.execute('DELETE FROM availability WHERE id=?', (slot_id,))
+                db.commit()
+                return jsonify(message='Availability removed.')
+            if db.execute(
+                'SELECT 1 FROM availability WHERE provider_id=? AND id!=? '
+                'AND julianday(starts_at)<julianday(?) AND julianday(ends_at)>julianday(?)',
+                (g.provider['id'], slot_id, end.isoformat(), start.isoformat())
+            ).fetchone():
+                return jsonify(error='This time overlaps one of your existing slots.'), 409
+            db.execute('UPDATE availability SET starts_at=?,ends_at=? WHERE id=?',
+                       (start.isoformat(), end.isoformat(), slot_id))
+            db.commit()
+        except sqlite3.OperationalError as error:
+            db.rollback()
+            if 'locked' in str(error).lower():
+                return jsonify(error='Saving is busy. Please try again.'), 503
+            raise
+    return jsonify(slot={'id': slot_id, 'starts_at': start.isoformat(),
+                         'ends_at': end.isoformat(), 'booked': False})
