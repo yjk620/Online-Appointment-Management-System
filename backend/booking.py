@@ -112,14 +112,22 @@ def own_appointment(db, appointment_id):
 def cancel(appointment_id):
     if not request.is_json or request.headers.get("X-Requested-With") != "AppointmentDesk":
         return jsonify(error="Invalid request."), 400
-    with closing(connect()) as db, db:
-        appointment = own_appointment(db, appointment_id)
-        if appointment is None:
-            return jsonify(error="This appointment was not found."), 404
-        if appointment["status"] != "scheduled" or not future_slot(appointment["starts_at"]):
-            return jsonify(error="Only upcoming scheduled appointments can be cancelled."), 409
-        # The cancelled row stays as history; the partial unique index frees the slot.
-        db.execute("UPDATE appointments SET status='cancelled' WHERE id=?", (appointment_id,))
+    with closing(connect()) as db:
+        try:
+            db.execute('BEGIN IMMEDIATE')
+            appointment = own_appointment(db, appointment_id)
+            if appointment is None:
+                return jsonify(error="This appointment was not found."), 404
+            if appointment["status"] != "scheduled" or not future_slot(appointment["starts_at"]):
+                return jsonify(error="Only upcoming scheduled appointments can be cancelled."), 409
+            # Preserve history and serialize the status check with rescheduling/outcomes.
+            db.execute("UPDATE appointments SET status='cancelled' WHERE id=?", (appointment_id,))
+            db.commit()
+        except sqlite3.OperationalError as error:
+            db.rollback()
+            if 'locked' in str(error).lower():
+                return jsonify(error='Saving is busy. Please try again.'), 503
+            raise
     return jsonify(message="Appointment cancelled.")
 
 
