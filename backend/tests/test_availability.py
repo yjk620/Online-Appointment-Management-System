@@ -18,6 +18,16 @@ class ProviderAvailabilityTest(unittest.TestCase):
     def create(self, starts_at, client=None):
         return (client or self.client).post('/api/provider/availability', json={'starts_at': starts_at}, headers=self.headers)
 
+    def update(self, slot_id, starts_at, client=None):
+        return (client or self.client).patch(
+            f'/api/provider/availability/{slot_id}', json={'starts_at': starts_at}, headers=self.headers
+        )
+
+    def delete(self, slot_id, client=None):
+        return (client or self.client).delete(
+            f'/api/provider/availability/{slot_id}', json={}, headers=self.headers
+        )
+
     def future(self, days=3, hour=15):
         return (datetime.now(timezone.utc) + timedelta(days=days)).replace(hour=hour, minute=0, second=0, microsecond=0)
 
@@ -78,6 +88,58 @@ class ProviderAvailabilityTest(unittest.TestCase):
             self.identify(self.client, user)
             self.assertEqual(self.client.get('/api/provider/availability').status_code, expected)
             self.assertEqual(self.create(iso(self.future())).status_code, expected)
+            self.assertEqual(self.update(1, iso(self.future())).status_code, expected)
+            self.assertEqual(self.delete(1).status_code, expected)
+
+    def test_provider_updates_open_slot_and_clients_see_the_change(self):
+        self.identify(self.client, 3)
+        changed = self.future(days=4, hour=18)
+        result = self.update(1, iso(changed))
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.json['slot']['starts_at'], iso(changed))
+        self.identify(self.client, 1)
+        slots = self.client.get('/api/booking/options').json['slots']
+        self.assertEqual([(slot['id'], slot['starts_at']) for slot in slots], [(1, iso(changed))])
+
+    def test_provider_removes_open_slot_and_clients_no_longer_see_it(self):
+        self.identify(self.client, 3)
+        self.assertEqual(self.delete(1).status_code, 200)
+        self.assertEqual(self.client.get('/api/provider/availability').json['slots'], [])
+        self.identify(self.client, 1)
+        self.assertEqual(self.client.get('/api/booking/options').json['slots'], [])
+
+    def test_update_rejects_past_overlap_and_another_providers_slot(self):
+        self.identify(self.client, 3)
+        second = self.future(days=5, hour=16)
+        second_id = self.create(iso(second)).json['slot']['id']
+        self.assertEqual(self.update(1, iso(second + timedelta(minutes=15))).status_code, 409)
+        self.assertEqual(self.update(1, iso(datetime.now(timezone.utc) - timedelta(hours=1))).status_code, 400)
+        with closing(sqlite3.connect(self.database)) as db, db:
+            db.execute("INSERT INTO users VALUES(5,'other','5@example.com','unused','provider')")
+            db.execute('INSERT INTO provider_profiles(user_id) VALUES(5)')
+            db.execute('UPDATE availability SET provider_id=5 WHERE id=?', (second_id,))
+        self.assertEqual(self.update(second_id, iso(self.future(days=6))).status_code, 404)
+        self.assertEqual(self.delete(second_id).status_code, 404)
+
+    def test_appointment_history_locks_slot_against_editing_and_removal(self):
+        self.identify(self.client, 1)
+        appointment = self.client.post('/api/appointments', json={'availability_id': 1}, headers=self.headers)
+        self.assertEqual(appointment.status_code, 201)
+        self.identify(self.client, 3)
+        self.assertEqual(self.update(1, iso(self.future(days=7))).status_code, 409)
+        self.assertEqual(self.delete(1).status_code, 409)
+        with closing(sqlite3.connect(self.database)) as db, db:
+            db.execute("UPDATE appointments SET status='cancelled'")
+        slot = self.client.get('/api/provider/availability').json['slots'][0]
+        self.assertEqual((slot['booked'], slot['locked']), (False, True))
+        self.assertEqual(self.update(1, iso(self.future(days=7))).status_code, 409)
+        self.assertEqual(self.delete(1).status_code, 409)
+
+    def test_update_and_delete_require_trusted_json_request(self):
+        self.identify(self.client, 3)
+        start = iso(self.future(days=4))
+        self.assertEqual(self.client.patch('/api/provider/availability/1', json={'starts_at': start}).status_code, 400)
+        self.assertEqual(self.client.delete('/api/provider/availability/1', json={}).status_code, 400)
 
 
 if __name__ == '__main__':

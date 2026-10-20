@@ -141,6 +141,19 @@ provider's existing slots returns 409. The overlap check and insert run in one
 `BEGIN IMMEDIATE` transaction, so two requests cannot add overlapping slots. Both
 routes use the `provider_only` guard in `availability.py`; reuse it for #11 and #13.
 
+## Modify provider availability (#11)
+
+Open provider slots have Edit time and Remove time actions. Editing keeps each slot
+30 minutes long, rejects past or overlapping times, and updates the time clients see.
+Removing an open slot makes it disappear from client booking options. Slots with
+appointment history are retained so existing booking records cannot be changed or
+orphaned.
+
+`PATCH /api/provider/availability/<id>` accepts the same `starts_at` JSON body used
+to create a slot. `DELETE /api/provider/availability/<id>` removes an unused slot.
+Both routes require the signed-in provider who owns the slot, JSON content type and
+the `X-Requested-With: AppointmentDesk` header.
+
 ## Cancel or reschedule (#12)
 
 Each upcoming appointment has Cancel appointment and Reschedule buttons. Cancelling
