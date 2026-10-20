@@ -1,4 +1,5 @@
 from contextlib import closing
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 import sqlite3
 import unittest
@@ -65,3 +66,12 @@ class AppointmentManagementTest(unittest.TestCase):
         for user in (3, 4):
             self.identify(self.client, user)
             self.assertEqual(self.client.get('/api/appointments/history').status_code, 403)
+
+    def test_concurrent_outcomes_have_one_winner(self):
+        def outcome(status):
+            client = self.app.test_client()
+            self.identify(client, 3)
+            return client.patch('/api/provider/appointments/1/status',
+                                json={'status': status}, headers=self.headers).status_code
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            self.assertEqual(sorted(pool.map(outcome, ('completed', 'no-show'))), [200, 409])
