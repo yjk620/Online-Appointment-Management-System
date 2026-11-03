@@ -5,6 +5,7 @@ import Providers from './Providers'
 import AccountTypeField, { type AccountType } from './AccountTypeField'
 import ProviderApplications from './ProviderApplications'
 import AdminSummary from './AdminSummary'
+import AdminUsers from './AdminUsers'
 import ProviderAppointments from './ProviderAppointments'
 import AppointmentHistory from './AppointmentHistory'
 import ProviderAvailability from './ProviderAvailability'
@@ -125,7 +126,7 @@ export default function App() {
             <h1>{user.role === 'admin' ? 'Admin' : user.role === 'provider' ? 'Provider' : 'Client'} home</h1>
             <p>Welcome, {user.name}.</p>
             <p>You are signed in as {user.email}.</p>
-            {user.role === 'client' ? <><UpcomingAppointments refreshVersion={appointmentsVersion} expanded={upcomingOpen} onToggle={() => setUpcomingOpen(open => !open)} onChanged={() => setAppointmentsVersion(version => version + 1)} /><AppointmentHistory refreshVersion={appointmentsVersion} /><Providers refreshVersion={appointmentsVersion} /><Booking refreshVersion={appointmentsVersion} expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} /></> : user.role === 'admin' ? <><AdminSummary refreshVersion={adminVersion} /><ProviderApplications onDecided={() => setAdminVersion(version => version + 1)} /></> : <><ProviderAppointments /><ProviderAvailability /></>}
+            {user.role === 'client' ? <><UpcomingAppointments refreshVersion={appointmentsVersion} expanded={upcomingOpen} onToggle={() => setUpcomingOpen(open => !open)} onChanged={() => setAppointmentsVersion(version => version + 1)} /><AppointmentHistory refreshVersion={appointmentsVersion} /><Providers refreshVersion={appointmentsVersion} /><Booking refreshVersion={appointmentsVersion} expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} /></> : user.role === 'admin' ? <><AdminSummary refreshVersion={adminVersion} /><ProviderApplications onDecided={() => setAdminVersion(version => version + 1)} /><AdminUsers refreshVersion={adminVersion} /></> : <><ProviderAppointments /><ProviderAvailability /></>}
             {error && <p role="alert">{error}</p>}
             <button disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button>
           </>

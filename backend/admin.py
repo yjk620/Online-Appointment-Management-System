@@ -72,6 +72,31 @@ def summary():
         appointments={status: statuses.get(status, 0) for status in ("scheduled", "completed", "cancelled", "no-show")},
     )
 
+
+@admin.get("/api/admin/users")
+@admin_only
+def user_directory():
+    """Read-only list of accounts for Admin home (#44); never returns password hashes.
+
+    Optional query parameters: q matches name or email (case-insensitive), role filters by role.
+    """
+    search = request.args.get("q", "").strip().lower()
+    role = request.args.get("role", "")
+    if role not in ("", "client", "provider", "admin"):
+        return jsonify(error="Choose client, provider or admin."), 400
+    with closing(connect()) as db:
+        rows = db.execute(
+            "SELECT u.id, u.name, u.email, u.role, "
+            "CASE WHEN u.role != 'provider' THEN NULL WHEN p.user_id IS NULL THEN 'approved' ELSE 'pending' END AS provider_status "
+            "FROM users u LEFT JOIN pending_providers p ON p.user_id = u.id "
+            # instr avoids treating % or _ in the search text as LIKE wildcards.
+            "WHERE (? = '' OR instr(lower(u.name), ?) > 0 OR instr(lower(u.email), ?) > 0) "
+            "AND (? = '' OR u.role = ?) "
+            "ORDER BY lower(u.name), u.id",
+            (search, search, search, role, role),
+        ).fetchall()
+    return jsonify(users=[dict(row) for row in rows])
+
 @admin.post("/api/admin/provider-applications/<int:user_id>/approve")
 @admin_only
 def approve_provider(user_id):
