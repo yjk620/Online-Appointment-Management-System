@@ -1,5 +1,20 @@
 # Consolidated test cases
 
+## Sprint 3 dashboard and search coverage
+
+| Feature | Issues | Evidence | Expected result |
+| --- | --- | --- | --- |
+| Client overview | #41 | `frontend/tests/dashboard.test.ts` and browser checks | Earliest future scheduled booking, correct count, shortcuts, mutation refresh and empty state |
+| Provider overview/filters | #42 | `frontend/tests/dashboard.test.ts` and browser checks | Today/upcoming/open counts, date/status combinations, local dates and retained outcomes |
+| Admin overview | #43 | `backend/tests/test_admin.py` and browser checks | Admin-only counts and appointment totals; approval refresh |
+| User directory | #44 | `backend/tests/test_admin.py` and browser checks | Read-only admin search/role filters without password fields |
+| Provider search | #45 | `frontend/tests/dashboard.test.ts` and browser checks | Name/description search, available-only filter, clear and no-results |
+
+November 3, 2026: 73 backend tests and 11 frontend logic tests passed; production
+build passed. Browser workflows and demo instructions are recorded in
+`docs/SPRINT_3_DEMO.md`. Full manual keyboard-only and hosted checks remain outstanding.
+Run frontend tests with `cd frontend && npm test` on Node 22.6+.
+
 This is the test-case index for the prototype. Automated tests remain grouped by
 feature in `backend/tests`; consolidation means one place to find the cases,
 expected behaviour, requirement coverage and execution instructions, not one huge
