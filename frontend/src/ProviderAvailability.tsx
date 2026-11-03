@@ -14,7 +14,7 @@ function todayKey() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 
-export default function ProviderAvailability({ refreshVersion = 0, onChanged }: { refreshVersion?: number; onChanged?: () => void }) {
+export default function ProviderAvailability() {
   const [slots, setSlots] = useState<Slot[]>([])
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
@@ -37,7 +37,7 @@ export default function ProviderAvailability({ refreshVersion = 0, onChanged }: 
     } catch (error) { setError(error instanceof Error ? error.message : 'Could not load your availability.') }
     finally { setLoading(false) }
   }
-  useEffect(() => { void load() }, [refreshVersion])
+  useEffect(() => { void load() }, [])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -57,7 +57,6 @@ export default function ProviderAvailability({ refreshVersion = 0, onChanged }: 
       setEditing(null)
       setTime('')
       await load()
-      onChanged?.()
     } catch { setError('Could not add this time. Please try again.') }
     finally { setBusy(false) }
   }
@@ -86,7 +85,6 @@ export default function ProviderAvailability({ refreshVersion = 0, onChanged }: 
       if (editing === slot.id) { setEditing(null); setDate(''); setTime('') }
       setNotice('Availability removed.')
       await load()
-      onChanged?.()
     } catch { setError('Could not remove this time. Please retry.') }
     finally { setBusy(false) }
   }

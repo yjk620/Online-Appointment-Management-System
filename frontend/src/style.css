@@ -89,13 +89,6 @@ button.secondary:hover { background: #edf3ef; }
 .slot-state { display: inline-block; padding: 2px 10px; border-radius: 999px; background: #edf3ef; color: #203c2b; font-size: 13px; font-weight: 600; }
 .slot-state.booked { background: #203c2b; color: #fff; }
 
-.dashboard-filters { display: grid; gap: 10px; margin-block: 20px; }
-.dashboard-filters label { margin: 0; }
-.check-filter { display: flex; align-items: center; gap: 10px; line-height: 1.5; }
-.check-filter input { width: 18px; min-height: 18px; margin: 0; accent-color: #203c2b; }
-.dashboard-filters select:focus-visible { outline: 3px solid #818f88; outline-offset: 3px; }
-.appointment-list { overflow-wrap: anywhere; }
-
 .admin-summary { margin: 24px 0; }
 .admin-summary h3 { margin: 16px 0 8px; font-size: 15px; }
 .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin: 0; }

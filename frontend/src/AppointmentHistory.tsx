@@ -6,12 +6,11 @@ export function appointmentDate(value: string) {
   return new Date(/(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? value : value.replace(' ', 'T') + 'Z')
 }
 
-export default function AppointmentHistory({ refreshVersion, openRequest = 0 }: { refreshVersion: number; openRequest?: number }) {
+export default function AppointmentHistory({ refreshVersion }: { refreshVersion: number }) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState(false)
-  useEffect(() => { if (openRequest > 0) setExpanded(true) }, [openRequest])
   async function load() {
     setLoading(true)
     setError('')
