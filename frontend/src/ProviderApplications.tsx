@@ -4,7 +4,7 @@ import './ProviderApplications.css'
 type Application = { id: number; name: string; email: string; requested_at: string }
 const headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'AppointmentDesk' }
 
-export default function ProviderApplications() {
+export default function ProviderApplications({ onDecided }: { onDecided: () => void }) {
   const [applications, setApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -36,7 +36,8 @@ export default function ProviderApplications() {
       if (response.status === 401) { window.location.replace('/login'); return }
       if (!response.ok) setError(((await response.json()) as { error?: string }).error ?? 'Could not update the application. Please retry.')
     } catch { setError('Could not connect to the server. Please try again.') }
-    finally { setBusyId(null); setReload(value => value + 1) }
+    // Reload both the list and the admin totals, whether the decision succeeded or not.
+    finally { setBusyId(null); setReload(value => value + 1); onDecided() }
   }
   return <section className="provider-applications" aria-labelledby="applications-title">
     <h2 id="applications-title">Provider applications{loading ? '' : ` (${applications.length})`}</h2>

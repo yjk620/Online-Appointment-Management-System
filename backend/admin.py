@@ -52,6 +52,26 @@ def provider_applications():
     return jsonify(applications=[dict(row) for row in rows])
 
 
+
+@admin.get("/api/admin/summary")
+@admin_only
+def summary():
+    """Account and appointment totals for Admin home (#43)."""
+    with closing(connect()) as db:
+        accounts = db.execute(
+            "SELECT "
+            "SUM(u.role = 'client') AS clients, "
+            "SUM(u.role = 'provider' AND p.user_id IS NULL) AS approved_providers, "
+            "SUM(p.user_id IS NOT NULL) AS pending_applications "
+            "FROM users u LEFT JOIN pending_providers p ON p.user_id = u.id"
+        ).fetchone()
+        statuses = dict(db.execute("SELECT status, COUNT(*) FROM appointments GROUP BY status").fetchall())
+    return jsonify(
+        accounts={key: accounts[key] or 0 for key in accounts.keys()},
+        # Every status is listed, so the page can show zeros without guessing.
+        appointments={status: statuses.get(status, 0) for status in ("scheduled", "completed", "cancelled", "no-show")},
+    )
+
 @admin.post("/api/admin/provider-applications/<int:user_id>/approve")
 @admin_only
 def approve_provider(user_id):
