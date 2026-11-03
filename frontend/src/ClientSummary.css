@@ -1,0 +1,4 @@
+.client-summary { margin-block: 24px 28px; }
+.client-summary-actions { display: grid; gap: 12px; margin-top: 20px; }
+.client-summary-actions .appointment-actions { margin: 0; }
+.client-summary-actions button { padding: 12px 14px; line-height: 1.4; }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { appointmentDate } from './AppointmentHistory'
 import { filterAppointments, localDay, openSlots, upcoming } from './dashboard'
+import './ProviderAppointments.css'
 
 type Appointment = { id: number; client_name: string; client_email: string; starts_at: string; ends_at: string; status: string }
 const headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'AppointmentDesk' }
@@ -60,7 +61,7 @@ export default function ProviderAppointments({ refreshVersion = 0, onChanged }: 
 
   const visible = filterAppointments(appointments, view, day, status, now)
   const today = appointments.filter(appointment => appointment.status === 'scheduled' && localDay(appointmentDate(appointment.starts_at)) === localDay(new Date(now)))
-  return <section aria-labelledby="provider-appointments-title">
+  return <section className="provider-appointments" aria-labelledby="provider-appointments-title">
     <h2 id="provider-appointments-title"><button className="section-toggle" aria-expanded={expanded} aria-controls="provider-appointments-content" onClick={() => setExpanded(open => !open)}>Your appointments</button></h2>
     <div id="provider-appointments-content" hidden={!expanded}>
       <p>View your bookings and record outcomes once an appointment starts.</p>
@@ -69,7 +70,7 @@ export default function ProviderAppointments({ refreshVersion = 0, onChanged }: 
         <dl className="summary-grid"><div><dt>Scheduled today</dt><dd>{today.length}</dd></div><div><dt>Upcoming appointments</dt><dd>{upcoming(appointments, now).length}</dd></div><div><dt>Open future slots</dt><dd>{openSlots(slots, now).length}</dd></div></dl>
         <button className="secondary" onClick={() => { setView('all'); setDay(localDay(new Date(now))); setStatus('scheduled'); setPending(null) }}>View today&apos;s appointments</button>
       </>}
-      <div className="appointment-actions">
+      <div className="appointment-actions appointment-views" role="group" aria-label="Appointment views">
         <button className={view === 'upcoming' ? '' : 'secondary'} aria-pressed={view === 'upcoming'} disabled={busy} onClick={() => { setView('upcoming'); setDay(''); setStatus(''); setPending(null) }}>Upcoming</button>
         <button className={view === 'history' ? '' : 'secondary'} aria-pressed={view === 'history'} disabled={busy} onClick={() => { setView('history'); setDay(''); setStatus(''); setPending(null) }}>Past and cancelled</button>
         <button className={view === 'all' ? '' : 'secondary'} aria-pressed={view === 'all'} disabled={busy} onClick={() => { setView('all'); setPending(null) }}>All appointments</button>

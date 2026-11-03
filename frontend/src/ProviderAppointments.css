@@ -1,0 +1,27 @@
+.provider-appointments .summary-grid { margin-block: 12px 16px; }
+.provider-appointments .appointment-views {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+  gap: 8px;
+  margin-block: 16px 20px;
+}
+.appointment-views button[aria-pressed] {
+  padding: 12px;
+  min-height: 48px;
+  line-height: 1.4;
+  background: #fff;
+  color: #203c2b;
+  border: 1px solid #a6b9ad;
+  transition: none;
+}
+.appointment-views button[aria-pressed]:hover { background: #edf3ef; }
+.appointment-views button[aria-pressed='true'] { background: #203c2b; color: #fff; border-color: #203c2b; }
+.appointment-views button[aria-pressed='true']:hover { background: #172e20; color: #fff; }
+.appointment-views button[aria-pressed]:disabled {
+  opacity: 1;
+  color: #515b54;
+  background: #edf0ed;
+  border-color: #c4cdc6;
+  cursor: wait;
+}
+.provider-appointments .dashboard-filters { gap: 12px; }
