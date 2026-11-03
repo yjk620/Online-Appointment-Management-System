@@ -150,5 +150,48 @@ class AdminTest(unittest.TestCase):
                 self.assertEqual(self.summary(client).status_code, expected)
 
 
+    def users(self, client=None, **params):
+        return (client or self.signed_in("admin@example.com")).get("/api/admin/users", query_string=params)
+
+    def test_directory_lists_accounts_without_password_hashes(self):
+        self.apply_as_provider("pat@example.com")
+        response = self.users()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+        rows = response.json["users"]
+        self.assertEqual([(u["email"], u["role"], u["provider_status"]) for u in rows], [
+            ("admin@example.com", "admin", None),
+            ("client@example.com", "client", None),
+            ("pat@example.com", "provider", "pending"),
+            ("provider@example.com", "provider", "approved"),
+        ])
+        for row in rows:
+            self.assertEqual(set(row), {"id", "name", "email", "role", "provider_status"})
+
+    def test_directory_search_and_role_filter(self):
+        self.apply_as_provider("pat@example.com")
+        emails = lambda **params: [u["email"] for u in self.users(**params).json["users"]]
+        self.assertEqual(emails(q="PAT"), ["pat@example.com"])
+        self.assertEqual(emails(q="client@"), ["client@example.com"])
+        self.assertEqual(emails(q="  Provider "), ["provider@example.com"])
+        self.assertEqual(emails(role="provider"), ["pat@example.com", "provider@example.com"])
+        self.assertEqual(emails(q="pat", role="client"), [])
+        self.assertEqual(emails(q="%"), [])
+        self.assertEqual(self.users(role="owner").status_code, 400)
+
+    def test_directory_shows_approval_after_decision(self):
+        pending_id = self.apply_as_provider("pat@example.com")
+        admin = self.signed_in("admin@example.com")
+        self.decide(admin, pending_id, "approve")
+        [pat] = self.users(admin, q="pat").json["users"]
+        self.assertEqual(pat["provider_status"], "approved")
+
+    def test_directory_is_admin_only(self):
+        for email, expected in ((None, 401), ("client@example.com", 403), ("provider@example.com", 403)):
+            with self.subTest(signed_in_as=email):
+                client = self.app.test_client() if email is None else self.signed_in(email)
+                self.assertEqual(self.users(client).status_code, expected)
+
+
 if __name__ == "__main__":
     unittest.main()

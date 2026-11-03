@@ -13,6 +13,7 @@ All routes require a signed-in session. Mutations require JSON and
 | PATCH | `/api/provider/appointments/<id>/status` | Provider | `status`: `completed` or `no-show`; only scheduled appointments whose start has passed |
 | GET | `/api/appointments/history` | Client | Own appointments and current statuses, newest first |
 | GET | `/api/admin/summary` | Admin | Counts of clients, approved providers and pending applications, and appointments per status (#43) |
+| GET | `/api/admin/users` | Admin | Read-only account list (no password hashes); optional `q` (name or email) and `role` filters; providers include `provider_status` (#44) |
 
 Creation, cancellation and rescheduling already existed on main; this change adds
 provider listing/status updates and client-visible history. Availability editing

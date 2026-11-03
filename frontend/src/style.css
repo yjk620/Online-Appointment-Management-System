@@ -95,3 +95,14 @@ button.secondary:hover { background: #edf3ef; }
 .summary-grid div { border: 1px solid #d4d4d2; border-radius: 12px; padding: 12px 14px; }
 .summary-grid dt { color: #626264; font-size: 13px; }
 .summary-grid dd { margin: 4px 0 0; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; color: #203c2b; }
+
+.admin-users { margin: 24px 0; }
+.user-filters { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; align-items: end; }
+.user-filters p { margin: 0; }
+.user-filters select { min-height: 50px; }
+.user-list { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 8px; }
+.user-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid #d4d4d2; border-radius: 12px; padding: 12px 14px; }
+.user-list li div { display: grid; gap: 2px; min-width: 0; }
+.user-list li div span { color: #626264; font-size: 13px; overflow-wrap: anywhere; }
+.user-role { flex: none; padding: 2px 10px; border-radius: 999px; background: #edf3ef; color: #203c2b; font-size: 12px; font-weight: 600; }
+@media (max-width: 540px) { .user-filters { grid-template-columns: 1fr; } }
