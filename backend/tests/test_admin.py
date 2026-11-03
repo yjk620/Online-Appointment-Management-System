@@ -116,5 +116,39 @@ class AdminTest(unittest.TestCase):
         self.assertEqual(self.query("SELECT email FROM users WHERE role = 'admin'"), [("admin@example.com",)])
 
 
+    def summary(self, client=None):
+        return (client or self.signed_in("admin@example.com")).get("/api/admin/summary")
+
+    def test_summary_counts_accounts_and_appointment_statuses(self):
+        self.apply_as_provider("pat@example.com")
+        client_id, provider_id = (self.query("SELECT id FROM users WHERE email = ?", f"{r}@example.com")[0][0] for r in ("client", "provider"))
+        with closing(sqlite3.connect(self.database)) as db, db:
+            for slot, status in enumerate(("scheduled", "scheduled", "completed", "cancelled"), start=1):
+                db.execute("INSERT INTO availability VALUES (?, ?, ?, ?)", (slot, provider_id, f"2099-01-0{slot}T10:00:00+00:00", f"2099-01-0{slot}T10:30:00+00:00"))
+                db.execute("INSERT INTO appointments (client_id, availability_id, status) VALUES (?, ?, ?)", (client_id, slot, status))
+        response = self.summary()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+        self.assertEqual(response.json, {
+            "accounts": {"clients": 1, "approved_providers": 1, "pending_applications": 1},
+            "appointments": {"scheduled": 2, "completed": 1, "cancelled": 1, "no-show": 0},
+        })
+
+    def test_summary_changes_after_application_decisions(self):
+        first, second = self.apply_as_provider("a@example.com"), self.apply_as_provider("b@example.com")
+        admin = self.signed_in("admin@example.com")
+        self.assertEqual(self.summary(admin).json["accounts"], {"clients": 1, "approved_providers": 1, "pending_applications": 2})
+        self.decide(admin, first, "approve")
+        self.assertEqual(self.summary(admin).json["accounts"], {"clients": 1, "approved_providers": 2, "pending_applications": 1})
+        self.decide(admin, second, "reject")
+        self.assertEqual(self.summary(admin).json["accounts"], {"clients": 1, "approved_providers": 2, "pending_applications": 0})
+
+    def test_summary_is_admin_only(self):
+        for email, expected in ((None, 401), ("client@example.com", 403), ("provider@example.com", 403)):
+            with self.subTest(signed_in_as=email):
+                client = self.app.test_client() if email is None else self.signed_in(email)
+                self.assertEqual(self.summary(client).status_code, expected)
+
+
 if __name__ == "__main__":
     unittest.main()

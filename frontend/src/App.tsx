@@ -4,6 +4,7 @@ import UpcomingAppointments from './UpcomingAppointments'
 import Providers from './Providers'
 import AccountTypeField, { type AccountType } from './AccountTypeField'
 import ProviderApplications from './ProviderApplications'
+import AdminSummary from './AdminSummary'
 import ProviderAppointments from './ProviderAppointments'
 import AppointmentHistory from './AppointmentHistory'
 import ProviderAvailability from './ProviderAvailability'
@@ -16,6 +17,7 @@ export default function App() {
   const [upcomingOpen, setUpcomingOpen] = useState(true)
   const [bookingOpen, setBookingOpen] = useState(false)
   const [appointmentsVersion, setAppointmentsVersion] = useState(0)
+  const [adminVersion, setAdminVersion] = useState(0)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -123,7 +125,7 @@ export default function App() {
             <h1>{user.role === 'admin' ? 'Admin' : user.role === 'provider' ? 'Provider' : 'Client'} home</h1>
             <p>Welcome, {user.name}.</p>
             <p>You are signed in as {user.email}.</p>
-            {user.role === 'client' ? <><UpcomingAppointments refreshVersion={appointmentsVersion} expanded={upcomingOpen} onToggle={() => setUpcomingOpen(open => !open)} onChanged={() => setAppointmentsVersion(version => version + 1)} /><AppointmentHistory refreshVersion={appointmentsVersion} /><Providers refreshVersion={appointmentsVersion} /><Booking refreshVersion={appointmentsVersion} expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} /></> : user.role === 'admin' ? <ProviderApplications /> : <><ProviderAppointments /><ProviderAvailability /></>}
+            {user.role === 'client' ? <><UpcomingAppointments refreshVersion={appointmentsVersion} expanded={upcomingOpen} onToggle={() => setUpcomingOpen(open => !open)} onChanged={() => setAppointmentsVersion(version => version + 1)} /><AppointmentHistory refreshVersion={appointmentsVersion} /><Providers refreshVersion={appointmentsVersion} /><Booking refreshVersion={appointmentsVersion} expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} /></> : user.role === 'admin' ? <><AdminSummary refreshVersion={adminVersion} /><ProviderApplications onDecided={() => setAdminVersion(version => version + 1)} /></> : <><ProviderAppointments /><ProviderAvailability /></>}
             {error && <p role="alert">{error}</p>}
             <button disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button>
           </>
