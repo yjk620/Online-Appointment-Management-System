@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { dateValue, upcoming } from './dashboard'
+import './ClientSummary.css'
 
 type Appointment = { id: number; provider_name: string; starts_at: string; status: string }
 
@@ -25,13 +26,15 @@ export default function ClientSummary({ refreshVersion, onBook, onHistory, onRef
     void load(); return () => controller.abort()
   }, [refreshVersion])
   const next = upcoming(appointments, now)
-  return <section aria-labelledby="client-overview-title">
+  return <section className="client-summary" aria-labelledby="client-overview-title">
     <h2 id="client-overview-title">Your overview</h2>
     {loading ? <p role="status">Loading overview...</p> : error ? <p role="alert">{error}</p> : <>
       <p><strong>{next.length}</strong> upcoming appointment{next.length === 1 ? '' : 's'}</p>
       {next[0] ? <p>Next: <strong>{next[0].provider_name}</strong><br /><time dateTime={next[0].starts_at}>{dateValue(next[0].starts_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></p> : <p>No upcoming appointments. Book a time when you are ready.</p>}
     </>}
-    <div className="appointment-actions"><button onClick={onBook}>Book an appointment</button><button className="secondary" onClick={onHistory}>View appointment history</button></div>
-    <button className="secondary" disabled={loading} onClick={onRefresh}>{error ? 'Retry overview' : 'Refresh overview'}</button>
+    <div className="client-summary-actions">
+      <div className="appointment-actions"><button onClick={onBook}>Book an appointment</button><button className="secondary" onClick={onHistory}>View appointment history</button></div>
+      <button className="secondary" disabled={loading} onClick={onRefresh}>{error ? 'Retry overview' : 'Refresh overview'}</button>
+    </div>
   </section>
 }
