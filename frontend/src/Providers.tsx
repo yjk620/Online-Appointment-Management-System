@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './Providers.css'
+import { filterProviders, openSlots } from './dashboard'
 
 type Provider = { id: number; name: string; description: string }
 type Slot = { id: number; provider_id: number; starts_at: string }
@@ -16,6 +17,8 @@ export default function Providers({ refreshVersion }: { refreshVersion: number }
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
+  const [query, setQuery] = useState('')
+  const [availableOnly, setAvailableOnly] = useState(false)
   useEffect(() => {
     const controller = new AbortController()
     async function load() {
@@ -35,12 +38,19 @@ export default function Providers({ refreshVersion }: { refreshVersion: number }
     return () => controller.abort()
   }, [refreshVersion, retry])
   const selected = providers.find(item => item.id === selectedId)
-  const openTimes = selected ? slots.filter(item => item.provider_id === selected.id) : []
+  const visible = filterProviders(providers, slots, query, availableOnly)
+  const openTimes = selected ? openSlots(slots).filter(item => item.provider_id === selected.id) : []
   return <section aria-labelledby="providers-title">
     <h2 id="providers-title"><button className="section-toggle" type="button" aria-expanded={expanded} aria-controls="providers-content" onClick={() => setExpanded(open => !open)}>
       <span>Providers{!loading && !error ? ` (${providers.length})` : ''}</span><span aria-hidden="true">{expanded ? '-' : '+'}</span>
     </button></h2>
     <div id="providers-content" hidden={!expanded}>
+    {!selected && <div className="dashboard-filters">
+      <label htmlFor="provider-search">Search providers</label>
+      <input id="provider-search" type="search" placeholder="Name or description" value={query} onChange={event => setQuery(event.target.value)} />
+      <label className="check-filter"><input type="checkbox" checked={availableOnly} onChange={event => setAvailableOnly(event.target.checked)} />Only providers with open times</label>
+      <button type="button" className="secondary" onClick={() => { setQuery(''); setAvailableOnly(false) }}>Clear provider filters</button>
+    </div>}
     {loading ? <p role="status">Loading providers...</p> : error ? <p role="alert">{error}</p> : providers.length === 0 ? <p>No providers are available yet.</p> : selected ?
       <div className="provider-details" aria-labelledby="provider-name">
         <h3 id="provider-name">{selected.name}</h3>
@@ -50,11 +60,11 @@ export default function Providers({ refreshVersion }: { refreshVersion: number }
         <p>To book, open Book an appointment below and choose {selected.name}.</p>
         <button type="button" onClick={() => setSelectedId(null)}>Back to all providers</button>
       </div> :
-      <ul className="provider-list">{providers.map(item => <li key={item.id}>
+      <>{visible.length === 0 && <p role="status">No providers match your filters.</p>}<ul className="provider-list">{visible.map(item => <li key={item.id}>
         <button type="button" onClick={() => setSelectedId(item.id)}>
           <strong>{item.name}</strong>{item.description && <span>{item.description}</span>}
         </button>
-      </li>)}</ul>}
+      </li>)}</ul></>}
     {!selected && <button disabled={loading} onClick={() => setRetry(value => value + 1)}>{error ? 'Retry providers' : 'Refresh providers'}</button>}
     </div>
   </section>

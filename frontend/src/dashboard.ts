@@ -26,3 +26,10 @@ export function filterAppointments<T extends TimedAppointment>(appointments: T[]
       && (!status || item.status === status)
   }).sort((a, b) => dateValue(a.starts_at).getTime() - dateValue(b.starts_at).getTime())
 }
+
+export function filterProviders<T extends { id: number; name: string; description: string }>(providers: T[], slots: AvailableSlot[], query: string, availableOnly: boolean, now = Date.now()) {
+  const term = query.trim().toLocaleLowerCase()
+  const available = new Set(openSlots(slots, now).map(slot => slot.provider_id))
+  return providers.filter(provider => `${provider.name} ${provider.description}`.toLocaleLowerCase().includes(term)
+    && (!availableOnly || available.has(provider.id)))
+}

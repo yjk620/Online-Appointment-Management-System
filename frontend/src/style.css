@@ -111,3 +111,6 @@ button.secondary:hover { background: #edf3ef; }
 .dashboard-filters label { margin: 0; }
 .dashboard-filters select:focus-visible { outline: 3px solid #818f88; outline-offset: 3px; }
 .appointment-list { overflow-wrap: anywhere; }
+
+.check-filter { display: flex; align-items: center; gap: 10px; line-height: 1.5; }
+.check-filter input { width: 18px; min-height: 18px; margin: 0; accent-color: #203c2b; }
