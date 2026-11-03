@@ -20,6 +20,7 @@ export default function App() {
   const [bookingOpen, setBookingOpen] = useState(false)
   const [appointmentsVersion, setAppointmentsVersion] = useState(0)
   const [adminVersion, setAdminVersion] = useState(0)
+  const [providerVersion, setProviderVersion] = useState(0)
   const [historyRequest, setHistoryRequest] = useState(0)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -142,8 +143,8 @@ export default function App() {
               <ProviderApplications onDecided={() => setAdminVersion(version => version + 1)} />
               <AdminUsers refreshVersion={adminVersion} />
             </> : <>
-              <ProviderAppointments />
-              <ProviderAvailability />
+              <ProviderAppointments refreshVersion={providerVersion} onChanged={() => setProviderVersion(value => value + 1)} />
+              <ProviderAvailability refreshVersion={providerVersion} onChanged={() => setProviderVersion(value => value + 1)} />
             </>}
             {error && <p role="alert">{error}</p>}
             <button disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button>
