@@ -9,7 +9,7 @@ function slotDate(value: string) {
   return new Date(/(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? value : value.replace(' ', 'T') + 'Z')
 }
 
-export default function Providers({ refreshVersion }: { refreshVersion: number }) {
+export default function Providers({ refreshVersion, onBook }: { refreshVersion: number; onBook: (providerId: number) => void }) {
   const [expanded, setExpanded] = useState(false)
   const [providers, setProviders] = useState<Provider[]>([])
   const [slots, setSlots] = useState<Slot[]>([])
@@ -57,8 +57,8 @@ export default function Providers({ refreshVersion }: { refreshVersion: number }
         <p>{selected.description || 'This provider has not added a description yet.'}</p>
         <p>{openTimes.length === 0 ? 'No open appointment times right now.'
           : `${openTimes.length} open appointment time${openTimes.length === 1 ? '' : 's'}. Next: ${slotDate(openTimes[0].starts_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`}</p>
-        <p>To book, open Book an appointment below and choose {selected.name}.</p>
-        <button type="button" onClick={() => setSelectedId(null)}>Back to all providers</button>
+        {openTimes.length > 0 && <button type="button" onClick={() => onBook(selected.id)}>Book a time with {selected.name}</button>}
+        <button type="button" className="secondary" onClick={() => setSelectedId(null)}>Back to all providers</button>
       </div> :
       <>{visible.length === 0 && <p role="status">No providers match your filters.</p>}<ul className="provider-list">{visible.map(item => <li key={item.id}>
         <button type="button" onClick={() => setSelectedId(item.id)}>

@@ -18,6 +18,7 @@ const authHeaders = { 'Content-Type': 'application/json', 'X-Requested-With': 'A
 export default function App() {
   const [upcomingOpen, setUpcomingOpen] = useState(true)
   const [bookingOpen, setBookingOpen] = useState(false)
+  const [bookingChoice, setBookingChoice] = useState<{ id: number } | null>(null)
   const [appointmentsVersion, setAppointmentsVersion] = useState(0)
   const [adminVersion, setAdminVersion] = useState(0)
   const [providerVersion, setProviderVersion] = useState(0)
@@ -136,8 +137,8 @@ export default function App() {
                 onHistory={() => { setHistoryRequest(value => value + 1); window.setTimeout(() => document.getElementById('history-title')?.scrollIntoView({ block: 'start' }), 0) }} />
               <UpcomingAppointments refreshVersion={appointmentsVersion} expanded={upcomingOpen} onToggle={() => setUpcomingOpen(open => !open)} onChanged={() => setAppointmentsVersion(version => version + 1)} />
               <AppointmentHistory refreshVersion={appointmentsVersion} openRequest={historyRequest} />
-              <Providers refreshVersion={appointmentsVersion} />
-              <Booking refreshVersion={appointmentsVersion} expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} />
+              <Providers refreshVersion={appointmentsVersion} onBook={id => { setBookingChoice({ id }); setBookingOpen(true) }} />
+              <Booking refreshVersion={appointmentsVersion} chosenProvider={bookingChoice} expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} />
             </> : user.role === 'admin' ? <>
               <AdminSummary refreshVersion={adminVersion} />
               <ProviderApplications onDecided={() => setAdminVersion(version => version + 1)} />
