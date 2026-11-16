@@ -16,7 +16,7 @@ function dayKey(date: Date) {
 }
 function monthStart(date: Date) { return new Date(date.getFullYear(), date.getMonth(), 1) }
 
-export default function Booking({ refreshVersion, onBooked, expanded, onToggle }: { refreshVersion: number; onBooked: () => void; expanded: boolean; onToggle: () => void }) {
+export default function Booking({ refreshVersion, chosenProvider, onBooked, expanded, onToggle }: { refreshVersion: number; chosenProvider: { id: number } | null; onBooked: () => void; expanded: boolean; onToggle: () => void }) {
   const [providers, setProviders] = useState<Provider[]>([])
   const [slots, setSlots] = useState<Slot[]>([])
   const [provider, setProvider] = useState('')
@@ -55,6 +55,13 @@ export default function Booking({ refreshVersion, onBooked, expanded, onToggle }
     const next = slots.filter(item => item.provider_id === Number(value)).sort((a, b) => slotDate(a.starts_at).getTime() - slotDate(b.starts_at).getTime())[0]
     setMonth(monthStart(next ? slotDate(next.starts_at) : new Date()))
   }
+  // A provider picked from the Providers section arrives already selected, so the client goes straight to choosing a time.
+  // Each pick is a new object, so choosing the same provider again still scrolls back here.
+  useEffect(() => {
+    if (!chosenProvider) return
+    chooseProvider(String(chosenProvider.id))
+    document.getElementById('booking-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [chosenProvider])
   function moveMonth(offset: number) {
     const target = new Date(month.getFullYear(), month.getMonth() + offset, 1)
     setMonth(target < earliestMonth ? earliestMonth : target)
