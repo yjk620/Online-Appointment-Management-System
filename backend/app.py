@@ -14,6 +14,7 @@ from providers import providers
 from admin import admin
 from availability import availability
 from appointment_management import appointment_management
+from sample_data import sample
 
 
 def create_app(test_config=None):
@@ -23,6 +24,7 @@ def create_app(test_config=None):
     app.register_blueprint(admin)
     app.register_blueprint(availability)
     app.register_blueprint(appointment_management)
+    app.register_blueprint(sample)
     app.config.update(
         SECRET_KEY=os.environ.get("APPOINTMENTS_SECRET_KEY") or secrets.token_hex(32),
         SESSION_COOKIE_HTTPONLY=True,

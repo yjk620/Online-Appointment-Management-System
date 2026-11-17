@@ -29,6 +29,22 @@ Open the Vite URL shown in the terminal. The page checks `/api/health` through V
 
 To run the backend setup test: `cd backend && python -m unittest discover -s tests`.
 
+## Sample data (#70)
+
+The database is not in the repository, so a fresh clone starts empty. To fill it with
+sample data covering the edge cases on every page, run in the backend folder:
+
+```powershell
+.\.venv\Scripts\python.exe -m flask --app app sample seed
+```
+
+Sample accounts use `@edge.example.invalid`. Sign in as `provider@edge.example.invalid`
+(provider) or `casey@edge.example.invalid` (client) with `password123`. For the admin
+page, create your own admin with `flask --app app admin create`; the sample admin has
+a random password. Times are relative to now, so run `seed` again to refresh them; it
+replaces only the sample rows. `sample remove` deletes them. For local testing only.
+What each sample account covers: [docs/SAMPLE_DATA.md](docs/SAMPLE_DATA.md).
+
 ## Login
 
 Register at `/`, then sign in at `/login`. Signed-in users are sent to `/client`,
