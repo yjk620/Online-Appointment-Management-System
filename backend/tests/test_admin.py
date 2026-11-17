@@ -193,5 +193,31 @@ class AdminTest(unittest.TestCase):
                 self.assertEqual(self.users(client).status_code, expected)
 
 
+    def appointments(self, client=None):
+        return (client or self.signed_in("admin@example.com")).get("/api/admin/appointments")
+
+    def test_appointment_list_shows_every_booking_newest_first(self):
+        client_id, provider_id = (self.query("SELECT id FROM users WHERE email = ?", f"{r}@example.com")[0][0] for r in ("client", "provider"))
+        with closing(sqlite3.connect(self.database)) as db, db:
+            for slot, status in enumerate(("completed", "no-show", "scheduled"), start=1):
+                db.execute("INSERT INTO availability (id, provider_id, starts_at, ends_at) VALUES (?, ?, ?, ?)",
+                           (slot, provider_id, f"2099-01-0{slot}T10:00:00+00:00", f"2099-01-0{slot}T10:30:00+00:00"))
+                db.execute("INSERT INTO appointments (id, client_id, availability_id, status) VALUES (?, ?, ?, ?)", (slot, client_id, slot, status))
+        response = self.appointments()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+        self.assertEqual(response.json["appointments"][0], {
+            "id": 3, "status": "scheduled", "starts_at": "2099-01-03T10:00:00+00:00", "ends_at": "2099-01-03T10:30:00+00:00",
+            "client_name": "Client", "provider_name": "Provider",
+        })
+        self.assertEqual([(row["id"], row["status"]) for row in response.json["appointments"]], [(3, "scheduled"), (2, "no-show"), (1, "completed")])
+
+    def test_appointment_list_is_admin_only(self):
+        for email, expected in ((None, 401), ("client@example.com", 403), ("provider@example.com", 403)):
+            with self.subTest(signed_in_as=email):
+                client = self.app.test_client() if email is None else self.signed_in(email)
+                self.assertEqual(self.appointments(client).status_code, expected)
+
+
 if __name__ == "__main__":
     unittest.main()

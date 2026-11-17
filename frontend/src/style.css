@@ -89,23 +89,6 @@ button.secondary:hover { background: #edf3ef; }
 .slot-state { display: inline-block; padding: 2px 10px; border-radius: 999px; background: #edf3ef; color: #203c2b; font-size: 13px; font-weight: 600; }
 .slot-state.booked { background: #203c2b; color: #fff; }
 
-.admin-summary { margin: 24px 0; }
-.admin-summary h3 { margin: 16px 0 8px; font-size: 15px; }
-.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin: 0; }
-.summary-grid div { border: 1px solid #d4d4d2; border-radius: 12px; padding: 12px 14px; }
-.summary-grid dt { color: #626264; font-size: 13px; }
-.summary-grid dd { margin: 4px 0 0; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; color: #203c2b; }
-
-.admin-users { margin: 24px 0; }
-.user-filters { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; align-items: end; }
-.user-filters p { margin: 0; }
-.user-filters select { min-height: 50px; }
-.user-list { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 8px; }
-.user-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid #d4d4d2; border-radius: 12px; padding: 12px 14px; }
-.user-list li div { display: grid; gap: 2px; min-width: 0; }
-.user-list li div span { color: #626264; font-size: 13px; overflow-wrap: anywhere; }
-.user-role { flex: none; padding: 2px 10px; border-radius: 999px; background: #edf3ef; color: #203c2b; font-size: 12px; font-weight: 600; }
-@media (max-width: 540px) { .user-filters { grid-template-columns: 1fr; } }
 
 .dashboard-filters { display: grid; gap: 10px; margin-block: 20px; }
 .dashboard-filters label { margin: 0; }
@@ -208,3 +191,19 @@ button.link.danger { color: #a12c2c; text-decoration-color: #a12c2c; }
 .appointment-when.cancelled time { text-decoration: line-through; color: #626264; }
 .appointment-meta .soon { color: #203c2b; font-weight: 600; }
 .next-appointment .appointment-card + .appointment-card { margin-top: 12px; }
+/* Admin home: applications reuse the Needs an outcome look; users are divided rows like availability. */
+.needs-review .appointment-list li { border-color: #c9a227; background: #fffbea; }
+.needs-review .appointment-change { background: #fff; border: 1px solid #ecdc9c; }
+.needs-review button.secondary { border-color: #8a8a88; color: #1d1d1f; }
+.application-actions { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
+.application-actions button:not(.link) { width: auto; min-height: 44px; padding-inline: 24px; }
+.status-counts { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+.status-counts .tag { margin-left: 0; }
+.user-list { list-style: none; padding: 0; margin: 0 0 8px; border-top: 1px solid #e4e4e2; }
+.user-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 56px; padding: 8px 0; border-bottom: 1px solid #e4e4e2; font-size: 14px; }
+.user-list li div { display: grid; gap: 2px; min-width: 0; }
+.user-list li div span { color: #626264; font-size: 13px; overflow-wrap: anywhere; }
+.tag.dark { background: #1d1d1f; color: #fff; }
+.user-list .tag { flex: none; margin-left: 0; }
+.tag.amber { background: #fff3c4; color: #6b4f00; }
+.status-counts button.link { font-size: 15px; color: #1d1d1f; }
