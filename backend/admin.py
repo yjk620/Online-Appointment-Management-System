@@ -73,6 +73,20 @@ def summary():
     )
 
 
+@admin.get("/api/admin/appointments")
+@admin_only
+def appointment_list():
+    """Read-only list of every appointment behind the Admin home totals (#68), newest first."""
+    with closing(connect()) as db:
+        rows = db.execute(
+            "SELECT ap.id, ap.status, a.starts_at, a.ends_at, c.name AS client_name, p.name AS provider_name "
+            "FROM appointments ap JOIN availability a ON a.id = ap.availability_id "
+            "JOIN users c ON c.id = ap.client_id JOIN users p ON p.id = a.provider_id "
+            "ORDER BY a.starts_at DESC, ap.id DESC"
+        ).fetchall()
+    return jsonify(appointments=[dict(row) for row in rows])
+
+
 @admin.get("/api/admin/users")
 @admin_only
 def user_directory():

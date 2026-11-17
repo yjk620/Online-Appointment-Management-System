@@ -208,3 +208,4 @@ button.link.danger { color: #a12c2c; text-decoration-color: #a12c2c; }
 .tag.dark { background: #1d1d1f; color: #fff; }
 .user-list .tag { flex: none; margin-left: 0; }
 .tag.amber { background: #fff3c4; color: #6b4f00; }
+.status-counts button.link { font-size: 15px; color: #1d1d1f; }

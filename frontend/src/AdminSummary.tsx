@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ProviderApplications from './ProviderApplications'
 import AdminUsers from './AdminUsers'
+import AdminAppointments from './AdminAppointments'
 import { timeZoneLabel } from './dashboard'
 
 type Summary = {
@@ -35,23 +36,15 @@ export default function AdminSummary({ refreshVersion }: { refreshVersion: numbe
   }, [version])
 
   const accounts = summary?.accounts
-  const counts = summary?.appointments
-  const total = counts ? counts.scheduled + counts.completed + counts.cancelled + counts['no-show'] : 0
   return <>
+    {error && <><p role="alert">{error}</p><button type="button" className="secondary" onClick={() => setDecisions(value => value + 1)}>Retry</button></>}
     <p className="home-summary">
       Times shown in {timeZoneLabel()}
       {accounts && <> · {plural(accounts.clients, 'client')} · {plural(accounts.approved_providers, 'provider')}{accounts.pending_applications > 0 && <> · {accounts.pending_applications} pending</>}</>}
     </p>
     <div className="home-grid">
       <ProviderApplications refreshVersion={version} onDecided={() => setDecisions(value => value + 1)} />
-      <section aria-labelledby="appointment-totals-title">
-        <h2 id="appointment-totals-title">Appointments{counts ? ` (${total})` : ''}</h2>
-        {error ? <><p role="alert">{error}</p><button type="button" className="secondary" onClick={() => setDecisions(value => value + 1)}>Retry</button></>
-          : !counts ? <p role="status">Loading totals...</p>
-          : <p className="status-counts">
-            {counts.scheduled} scheduled · {counts.completed} completed · {counts.cancelled} cancelled · {counts['no-show'] > 0 ? <span className="tag red">{counts['no-show']} no-show</span> : '0 no-show'}
-          </p>}
-      </section>
+      <AdminAppointments refreshVersion={version} />
       <AdminUsers refreshVersion={version} />
     </div>
   </>
