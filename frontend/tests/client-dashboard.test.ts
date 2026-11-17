@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { upcoming } from '../src/dashboard.ts'
+import { relativeLabel, timeZoneLabel, upcoming, whenLabel } from '../src/dashboard.ts'
 
 process.env.TZ = 'America/Toronto'
 const now = Date.parse('2026-11-03T15:00:00Z')
@@ -22,4 +22,16 @@ test('empty and terminal-only client summaries have no next booking', () => {
 })
 test('a changed or cancelled booking changes summary totals', () => {
   assert.equal(upcoming(appointments.map(item => item.id === 2 ? { ...item, status: 'cancelled' } : item), now).length, 1)
+})
+test('next-appointment card says how far away the booking is in calendar days', () => {
+  assert.equal(relativeLabel('2026-11-03T15:20:00Z', now), 'in 20 minutes')
+  assert.equal(relativeLabel('2026-11-03T18:00:00Z', now), 'in 3 hours')
+  assert.equal(relativeLabel('2026-11-04T13:00:00Z', now), 'tomorrow')
+  assert.equal(relativeLabel('2026-11-05T13:00:00Z', now), 'in 2 days')
+  // 10 p.m. local is still today even though it is a different UTC date.
+  assert.equal(relativeLabel('2026-11-04T03:00:00Z', now), 'in 12 hours')
+})
+test('card time line shows weekday, date and time range, and the zone is named', () => {
+  assert.match(whenLabel('2026-11-18T13:00:00Z', '2026-11-18T13:30:00Z'), /^Wed, Nov 18 · 8:00\s*–\s*8:30\s(AM|a\.m\.)$/)
+  assert.equal(timeZoneLabel(), 'Eastern Time')
 })

@@ -24,7 +24,7 @@ form { margin-top: 36px; }
 form p { margin: 0 0 23px; }
 label { display: block; margin-bottom: 9px; color: #313133; font-size: 13px; font-weight: 600; }
 label + br { display: none; }
-input { display: block; width: 100%; min-height: 50px; padding: 0 15px; border: 1px solid #d4d4d2; border-radius: 8px; outline: none; background: #fff; color: #1d1d1f; font-size: 14px; caret-color: #1d1d1f; transition: border-color .16s, box-shadow .16s; }
+input { display: block; width: 100%; min-height: 50px; padding: 0 15px; border: 1px solid #8a8a88; border-radius: 8px; outline: none; background: #fff; color: #1d1d1f; font-size: 14px; caret-color: #1d1d1f; transition: border-color .16s, box-shadow .16s; }
 input::placeholder { color: #747476; opacity: 1; }
 input:hover { border-color: #a6a6a4; }
 input:focus-visible { border-color: #55595a; box-shadow: 0 0 0 3px #e8ecea; }
@@ -50,7 +50,7 @@ main a:hover { text-decoration-color: currentColor; }
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
 
-select { width: 100%; padding: 0.75rem; font: inherit; border: 1px solid #aaa; border-radius: 6px; background: white; color: #202020; }
+select { width: 100%; padding: 0.75rem; font: inherit; border: 1px solid #8a8a88; border-radius: 6px; background: white; color: #202020; }
 
 .booking-calendar { border: 1px solid #d4d4d2; border-radius: 12px; padding: 12px; }
 .calendar-navigation { display: grid; grid-template-columns: 70px 1fr 70px; align-items: center; gap: 6px; text-align: center; margin-bottom: 14px; }
@@ -114,3 +114,62 @@ button.secondary:hover { background: #edf3ef; }
 
 .check-filter { display: flex; align-items: center; gap: 10px; line-height: 1.5; }
 .check-filter input { width: 18px; min-height: 18px; margin: 0; accent-color: #203c2b; }
+
+header { justify-content: space-between; gap: 16px; }
+.account { display: flex; align-items: center; gap: 12px; min-width: 0; color: #626264; font-size: 13px; }
+.account span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+button.link { flex: none; width: auto; min-height: 0; padding: 4px 0; background: none; color: #1d1d1f; font-size: 13px; text-decoration: underline; text-decoration-color: #a0a0a0; text-underline-offset: 3px; }
+button.link:hover { background: none; text-decoration-color: currentColor; }
+
+main.wide { width: min(1040px, calc(100% - 40px)); }
+.client-home { display: grid; gap: 24px; margin-top: 28px; }
+.client-home h2 { margin: 0 0 12px; }
+.appointment-card { padding: 18px; border: 1px solid #a6b9ad; border-radius: 12px; background: #f2f6f3; }
+.appointment-card h3, .appointment-list h3 { margin: 0 0 6px; }
+.appointment-when { margin: 0; font-size: 16px; font-weight: 600; }
+.appointment-meta { margin: 4px 0 0; color: #626264; font-size: 13px; }
+.booking-section form { margin-top: 0; }
+.booking-step { margin-top: 0; color: #626264; }
+/* Wide screens: next appointment, later list and history on the left; booking spans the right.
+   The 1fr last row soaks up booking's height so the left column stays packed. */
+@media (min-width: 900px) {
+  .client-home { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: 48px; align-items: start; }
+  .client-home > * { grid-column: 1; }
+  .client-home > .booking-section { grid-column: 2; grid-row: 1 / span 3; }
+}
+
+/* Accordions: the toggle bar and its content share one bordered box. */
+:where(section:has(> h2 > .section-toggle)) { margin-block: 24px; }
+section:has(> h2 > .section-toggle) { border: 1px solid #d4d4d2; border-radius: 12px; overflow: hidden; }
+section:has(> h2 > .section-toggle) > h2 { margin: 0; }
+section:has(> h2 > .section-toggle) .section-toggle { border: 0; border-radius: 0; }
+section:has(> h2 > .section-toggle) > h2 + * { margin: 0; padding: 16px; border-top: 1px solid #d4d4d2; }
+.client-home > section { margin-block: 0; }
+
+/* Signed-in pages: the hero gap is for the centred sign-in form, not dashboards. */
+main.wide { margin-top: 40px; }
+@media (max-width: 540px) { main.wide { margin-top: 28px; } }
+
+/* Sign out: text link look, but at least a 44px-tall hit area for touch. */
+button.link { display: inline-flex; align-items: center; min-height: 44px; }
+
+/* Disclosure chevron on the leading edge: points right when collapsed, down when open (HIG disclosure-controls). */
+.section-toggle { justify-content: flex-start; }
+.section-toggle::before { content: ''; flex: none; width: 7px; height: 7px; margin-inline: 2px 4px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .16s; }
+.section-toggle[aria-expanded='true']::before { transform: rotate(45deg); }
+
+/* Inside an accordion box, list items are divided rows rather than cards nested in a card. */
+section:has(> h2 > .section-toggle) .appointment-list { gap: 0; margin: 0; }
+section:has(> h2 > .section-toggle) .appointment-list li { border: 0; border-radius: 0; padding: 16px 0; }
+section:has(> h2 > .section-toggle) .appointment-list li + li { border-top: 1px solid #e4e4e2; }
+section:has(> h2 > .section-toggle) .appointment-list li:first-child { padding-top: 0; }
+section:has(> h2 > .section-toggle) .appointment-list li:last-child { padding-bottom: 0; }
+
+/* Destructive confirmation: red, never the prominent primary style (HIG buttons › Role). */
+button.destructive { background: #fff; color: #a12c2c; border: 1px solid #a12c2c; }
+button.destructive:hover { background: #fbebeb; }
+
+/* Phones: keep the brand on one line; a truncated email says nothing, so show only Sign out. */
+header > a { white-space: nowrap; }
+@media (max-width: 540px) { .account span { display: none; } }
+.appointment-actions button { min-height: 44px; }

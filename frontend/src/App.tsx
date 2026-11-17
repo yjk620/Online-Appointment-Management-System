@@ -1,7 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
 import Booking from './Booking'
 import UpcomingAppointments from './UpcomingAppointments'
-import Providers from './Providers'
 import AccountTypeField, { type AccountType } from './AccountTypeField'
 import ProviderApplications from './ProviderApplications'
 import AdminSummary from './AdminSummary'
@@ -9,20 +8,16 @@ import AdminUsers from './AdminUsers'
 import ProviderAppointments from './ProviderAppointments'
 import AppointmentHistory from './AppointmentHistory'
 import ProviderAvailability from './ProviderAvailability'
-import ClientSummary from './ClientSummary'
+import { timeZoneLabel } from './dashboard'
 
 type User = { id: number; name: string; email: string; role: 'client' | 'provider' | 'admin' }
 const homes = { client: '/client', provider: '/provider', admin: '/admin' }
 const authHeaders = { 'Content-Type': 'application/json', 'X-Requested-With': 'AppointmentDesk' }
 
 export default function App() {
-  const [upcomingOpen, setUpcomingOpen] = useState(true)
-  const [bookingOpen, setBookingOpen] = useState(false)
-  const [bookingChoice, setBookingChoice] = useState<{ id: number } | null>(null)
   const [appointmentsVersion, setAppointmentsVersion] = useState(0)
   const [adminVersion, setAdminVersion] = useState(0)
   const [providerVersion, setProviderVersion] = useState(0)
-  const [historyRequest, setHistoryRequest] = useState(0)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -58,6 +53,14 @@ export default function App() {
     }
     void restoreSession()
   }, [onDashboard])
+
+  // Reload client data when the tab regains focus, so there is no Refresh button to think about.
+  useEffect(() => {
+    if (user?.role !== 'client') return
+    const reload = () => { if (document.visibilityState === 'visible') setAppointmentsVersion(version => version + 1) }
+    document.addEventListener('visibilitychange', reload)
+    return () => document.removeEventListener('visibilitychange', reload)
+  }, [user])
 
   async function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -121,34 +124,36 @@ export default function App() {
 
   return (
     <>
-      <header><a href="/">Appointment Desk</a></header>
-      <main>
+      <header><a href="/">Appointment Desk</a>
+        {user && <div className="account"><span>{user.email}</span>
+          <button type="button" className="link" disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button></div>}
+      </header>
+      <main className={user?.role === 'client' ? 'wide' : undefined}>
         {checkingSession ? <p role="status">Checking your session…</p> : sessionError ? (
           <><p role="alert">Could not check your session. Please try again.</p><button onClick={() => window.location.reload()}>Retry</button></>
         ) : user ? (
           <>
-            <h1>{user.role === 'admin' ? 'Admin' : user.role === 'provider' ? 'Provider' : 'Client'} home</h1>
-            <p>Welcome, {user.name}.</p>
-            <p>You are signed in as {user.email}.</p>
             {user.role === 'client' ? <>
-              <ClientSummary refreshVersion={appointmentsVersion}
-                onRefresh={() => setAppointmentsVersion(value => value + 1)}
-                onBook={() => { setBookingOpen(true); window.setTimeout(() => document.getElementById('booking-title')?.scrollIntoView({ block: 'start' }), 0) }}
-                onHistory={() => { setHistoryRequest(value => value + 1); window.setTimeout(() => document.getElementById('history-title')?.scrollIntoView({ block: 'start' }), 0) }} />
-              <UpcomingAppointments refreshVersion={appointmentsVersion} expanded={upcomingOpen} onToggle={() => setUpcomingOpen(open => !open)} onChanged={() => setAppointmentsVersion(version => version + 1)} />
-              <AppointmentHistory refreshVersion={appointmentsVersion} openRequest={historyRequest} />
-              <Providers refreshVersion={appointmentsVersion} onBook={id => { setBookingChoice({ id }); setBookingOpen(true) }} />
-              <Booking refreshVersion={appointmentsVersion} chosenProvider={bookingChoice} expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} />
+              <h1>Hi, {user.name.split(' ')[0]}.</h1>
+              <p>Times shown in {timeZoneLabel()}.</p>
+              <div className="client-home">
+                <UpcomingAppointments refreshVersion={appointmentsVersion} onChanged={() => setAppointmentsVersion(version => version + 1)} />
+                <Booking refreshVersion={appointmentsVersion} onBooked={() => setAppointmentsVersion(version => version + 1)} />
+                <AppointmentHistory refreshVersion={appointmentsVersion} />
+              </div>
             </> : user.role === 'admin' ? <>
+              <h1>Admin home</h1>
+              <p>Welcome, {user.name}.</p>
               <AdminSummary refreshVersion={adminVersion} />
               <ProviderApplications onDecided={() => setAdminVersion(version => version + 1)} />
               <AdminUsers refreshVersion={adminVersion} />
             </> : <>
+              <h1>Provider home</h1>
+              <p>Welcome, {user.name}.</p>
               <ProviderAppointments refreshVersion={providerVersion} onChanged={() => setProviderVersion(value => value + 1)} />
               <ProviderAvailability refreshVersion={providerVersion} onChanged={() => setProviderVersion(value => value + 1)} />
             </>}
             {error && <p role="alert">{error}</p>}
-            <button disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button>
           </>
         ) : onDashboard ? <p role="status">Redirecting to sign in…</p> : onLoginPage ? (
           <>

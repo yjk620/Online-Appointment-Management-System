@@ -1,4 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
+import './Providers.css'
+import { filterProviders, whenLabel } from './dashboard'
 
 type Provider = { id: number; name: string; description: string }
 type Slot = { id: number; provider_id: number; starts_at: string; ends_at: string }
@@ -8,15 +10,12 @@ function slotDate(value: string) {
   return new Date(zoned)
 }
 
-function dateLabel(value: string) {
-  return slotDate(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
-}
 function dayKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 function monthStart(date: Date) { return new Date(date.getFullYear(), date.getMonth(), 1) }
 
-export default function Booking({ refreshVersion, chosenProvider, onBooked, expanded, onToggle }: { refreshVersion: number; chosenProvider: { id: number } | null; onBooked: () => void; expanded: boolean; onToggle: () => void }) {
+export default function Booking({ refreshVersion, onBooked }: { refreshVersion: number; onBooked: () => void }) {
   const [providers, setProviders] = useState<Provider[]>([])
   const [slots, setSlots] = useState<Slot[]>([])
   const [provider, setProvider] = useState('')
@@ -26,10 +25,12 @@ export default function Booking({ refreshVersion, chosenProvider, onBooked, expa
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
+  const [query, setQuery] = useState('')
+  const [availableOnly, setAvailableOnly] = useState(false)
   const [confirmed, setConfirmed] = useState<Appointment | null>(null)
   async function load() {
     setLoading(true)
-    setSlot('')
     try {
       const response = await fetch('/api/booking/options', { cache: 'no-store' })
       if (response.status === 401) { window.location.replace('/login'); return }
@@ -37,11 +38,14 @@ export default function Booking({ refreshVersion, chosenProvider, onBooked, expa
       const result = (await response.json()) as { providers: Provider[]; slots: Slot[] }
       setProviders(result.providers)
       setSlots(result.slots)
-    } catch (error) { setSlots([]); setError(error instanceof Error ? error.message : 'Could not load options.') }
+      setLoadError('')
+    } catch (error) { setSlots([]); setLoadError(error instanceof Error ? error.message : 'Could not load options.') }
     finally { setLoading(false) }
   }
   // Reload when appointments change elsewhere, e.g. a cancellation frees a time.
   useEffect(() => { void load() }, [refreshVersion])
+  const chosen = providers.find(item => item.id === Number(provider))
+  const visible = filterProviders(providers, slots, query, availableOnly)
   const available = slots.filter(item => item.provider_id === Number(provider))
   const selectedSlot = available.find(item => item.id === Number(slot) && dayKey(slotDate(item.starts_at)) === day)
   const daysWithSlots = new Set(available.map(item => dayKey(slotDate(item.starts_at))))
@@ -55,13 +59,6 @@ export default function Booking({ refreshVersion, chosenProvider, onBooked, expa
     const next = slots.filter(item => item.provider_id === Number(value)).sort((a, b) => slotDate(a.starts_at).getTime() - slotDate(b.starts_at).getTime())[0]
     setMonth(monthStart(next ? slotDate(next.starts_at) : new Date()))
   }
-  // A provider picked from the Providers section arrives already selected, so the client goes straight to choosing a time.
-  // Each pick is a new object, so choosing the same provider again still scrolls back here.
-  useEffect(() => {
-    if (!chosenProvider) return
-    chooseProvider(String(chosenProvider.id))
-    document.getElementById('booking-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [chosenProvider])
   function moveMonth(offset: number) {
     const target = new Date(month.getFullYear(), month.getMonth() + offset, 1)
     setMonth(target < earliestMonth ? earliestMonth : target)
@@ -92,20 +89,33 @@ export default function Booking({ refreshVersion, chosenProvider, onBooked, expa
     } catch { setError('Could not confirm the booking. Refresh available times before retrying.') }
     finally { setBusy(false) }
   }
-  return <section aria-labelledby="booking-title">
-    <h2 id="booking-title"><button className="section-toggle" type="button" aria-expanded={expanded} aria-controls="booking-content" onClick={onToggle}>
-      <span>Book an appointment</span><span aria-hidden="true">{expanded ? '-' : '+'}</span>
-    </button></h2>
-    <div id="booking-content" hidden={!expanded}>
-    <p>Times are shown in your device's local time zone.</p>
+  return <section className="booking-section" aria-labelledby="booking-title">
+    <h2 id="booking-title">Book an appointment</h2>
+    {loadError && <><p role="alert">{loadError}</p><button type="button" className="secondary" disabled={loading} onClick={() => void load()}>Retry</button></>}
     {error && <p role="alert">{error}</p>}
-    {confirmed && <div role="status"><h3>Appointment booked</h3><p>{confirmed.provider_name}</p><p>{dateLabel(confirmed.starts_at)} - {dateLabel(confirmed.ends_at)}</p><p>Confirmation #{confirmed.id} - {confirmed.status}</p></div>}
-    {loading ? <p role="status">Loading available times...</p> : providers.length === 0 ? <p>No providers are available yet.</p> : <form onSubmit={submit}>
-      <p><label htmlFor="booking-provider">Provider</label><br />
-        <select id="booking-provider" required disabled={busy} value={provider} onChange={event => chooseProvider(event.target.value)}>
-          <option value="">Choose a provider</option>{providers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select></p>
-      {provider && <p>{providers.find(item => item.id === Number(provider))?.description}</p>}
+    {confirmed && <div role="status"><h3>Appointment booked</h3><p>{confirmed.provider_name}</p><p>{whenLabel(confirmed.starts_at, confirmed.ends_at)}</p><p>Confirmation #{confirmed.id}</p></div>}
+    {loading && providers.length === 0 ? <p role="status">Loading available times...</p> : providers.length === 0 ? <p>No providers are available yet.</p> : <form onSubmit={submit}>
+      {!chosen ? <>
+        <p className="booking-step">Choose a provider, then pick a time.</p>
+        <div className="dashboard-filters">
+          <label htmlFor="provider-search">Search providers</label>
+          <input id="provider-search" type="search" placeholder="Name or description" value={query} onChange={event => setQuery(event.target.value)} />
+          <label className="check-filter"><input type="checkbox" checked={availableOnly} onChange={event => setAvailableOnly(event.target.checked)} />Only providers with open times</label>
+          {(query || availableOnly) && <button type="button" className="secondary" onClick={() => { setQuery(''); setAvailableOnly(false) }}>Clear provider filters</button>}
+        </div>
+        {visible.length === 0 && <p role="status">No providers match your filters.</p>}
+        <ul className="provider-list">{visible.map(item => {
+          const first = slots.find(slot => slot.provider_id === item.id)
+          return <li key={item.id}><button type="button" disabled={busy} onClick={() => chooseProvider(String(item.id))}>
+            <strong>{item.name}</strong>{item.description && <span>{item.description}</span>}
+            <span>{first ? `Next opening: ${whenLabel(first.starts_at, first.ends_at)}` : 'No open times right now'}</span>
+          </button></li>
+        })}</ul>
+      </> : <div className="provider-details">
+        <h3>{chosen.name}</h3>
+        <p>{chosen.description || 'This provider has not added a description yet.'}</p>
+        <button type="button" className="secondary" disabled={busy} onClick={() => chooseProvider('')}>Change provider</button>
+      </div>}
       {provider && <>
         <h3>Choose a date</h3>
         <div className="booking-calendar">
@@ -140,13 +150,11 @@ export default function Booking({ refreshVersion, chosenProvider, onBooked, expa
       </>}
       {selectedSlot && <div className="booking-review" aria-live="polite">
         <h3>Review your appointment</h3>
-        <p>{providers.find(item => item.id === Number(provider))?.name}</p>
-        <p>{dateLabel(selectedSlot.starts_at)} - {dateLabel(selectedSlot.ends_at)}</p>
+        <p>{chosen?.name}</p>
+        <p>{whenLabel(selectedSlot.starts_at, selectedSlot.ends_at)}</p>
         <p>Your appointment is saved only after you confirm.</p>
         <button disabled={busy} type="submit">{busy ? 'Booking...' : 'Confirm appointment'}</button>
       </div>}
     </form>}
-    <p><button disabled={busy || loading} onClick={() => { setError(''); setSlot(''); void load() }}>Refresh available times</button></p>
-    </div>
   </section>
 }

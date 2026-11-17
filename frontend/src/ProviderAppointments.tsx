@@ -62,7 +62,7 @@ export default function ProviderAppointments({ refreshVersion = 0, onChanged }: 
   const visible = filterAppointments(appointments, view, day, status, now)
   const today = appointments.filter(appointment => appointment.status === 'scheduled' && localDay(appointmentDate(appointment.starts_at)) === localDay(new Date(now)))
   return <section className="provider-appointments" aria-labelledby="provider-appointments-title">
-    <h2 id="provider-appointments-title"><button className="section-toggle" aria-expanded={expanded} aria-controls="provider-appointments-content" onClick={() => setExpanded(open => !open)}>Your appointments</button></h2>
+    <h2 id="provider-appointments-title"><button className="section-toggle" aria-expanded={expanded} aria-controls="provider-appointments-content" onClick={() => setExpanded(open => !open)}><span>Your appointments</span></button></h2>
     <div id="provider-appointments-content" hidden={!expanded}>
       <p>View your bookings and record outcomes once an appointment starts.</p>
       {!loading && !error && <>
