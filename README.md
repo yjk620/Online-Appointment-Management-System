@@ -1,179 +1,85 @@
 # Online Appointment Management System
 
-CPS714 prototype using React, TypeScript, Flask, and SQLite.
+A CPS714 prototype for booking appointments, built with React, TypeScript, Flask and SQLite.
 
-Test cases and manual acceptance checks: [docs/TEST_CASES.md](docs/TEST_CASES.md).
-Appointment management endpoints: [docs/API.md](docs/API.md).
+- **Clients** find a provider, book an open time, and reschedule, cancel or review past appointments.
+- **Providers** add, edit and remove 30-minute open times, see what's next, and mark appointments completed or no-show.
+- **Admins** approve or reject provider applications, see appointment totals and the appointments behind them, and search users.
+
+Anyone can register as a client. Provider accounts wait for an admin's approval. Admin accounts can only be created from the server's command line.
 
 ## Run locally
 
-Backend (Python 3):
+You need Python 3.12 and Node.js 22.12 or newer. Run the backend and frontend in two terminals.
 
-```bash
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-flask --app app run
+**Backend**, from the `backend` folder:
+
+```powershell
+# Windows (PowerShell)
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m flask --app app run --debug
 ```
 
-Frontend (Node.js 22 or newer), in a second terminal:
+```bash
+# macOS / Linux
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/flask --app app run --debug
+```
+
+Only the first two lines are one-time setup. `--debug` restarts the server when backend code changes; use it on your own computer only.
+
+**Frontend**, from the `frontend` folder:
 
 ```bash
-cd frontend
 npm install
 npm run dev
 ```
 
-Open the Vite URL shown in the terminal. The page checks `/api/health` through Vite's local proxy. Flask creates `backend/appointments.db` with the initial schema on startup.
+Open http://localhost:5173. Port 5000 is only the API: Vite forwards `/api` requests to it.
 
-To run the backend setup test: `cd backend && python -m unittest discover -s tests`.
+## Accounts and sample data
 
-## Sample data (#70)
+The database (`backend/appointments.db`) is created on first start and is not in the repository, so a fresh clone starts empty. Run these from the `backend` folder (shown for Windows; on macOS or Linux use `.venv/bin/flask` in place of `.\.venv\Scripts\python.exe -m flask`):
 
-The database is not in the repository, so a fresh clone starts empty. To fill it with
-sample data covering the edge cases on every page, run in the backend folder:
+| Command | What it does |
+| --- | --- |
+| `.\.venv\Scripts\python.exe -m flask --app app admin create` | Creates an admin account. It asks for a name, email and password |
+| `.\.venv\Scripts\python.exe -m flask --app app sample seed` | Adds sample clients, providers, appointments and applications covering every edge case. Run it again to refresh the times. Local testing only |
+| `.\.venv\Scripts\python.exe -m flask --app app sample remove` | Deletes the sample data and keeps everything else |
 
-```powershell
-.\.venv\Scripts\python.exe -m flask --app app sample seed
+Sample accounts sign in with `password123`, for example `provider@edge.example.invalid` or `casey@edge.example.invalid`. [docs/SAMPLE_DATA.md](docs/SAMPLE_DATA.md) lists what each one covers.
+
+## Tests
+
+```bash
+cd backend && python -m unittest discover -s tests   # use the .venv Python
+cd frontend && npm test
 ```
 
-Sample accounts use `@edge.example.invalid`. Sign in as `provider@edge.example.invalid`
-(provider) or `casey@edge.example.invalid` (client) with `password123`. For the admin
-page, create your own admin with `flask --app app admin create`; the sample admin has
-a random password. Times are relative to now, so run `seed` again to refresh them; it
-replaces only the sample rows. `sample remove` deletes them. For local testing only.
-What each sample account covers: [docs/SAMPLE_DATA.md](docs/SAMPLE_DATA.md).
+Manual acceptance checks are in [docs/TEST_CASES.md](docs/TEST_CASES.md).
 
-## Login
+## Deploy (Railway)
 
-Register at `/`, then sign in at `/login`. Signed-in users are sent to `/client`,
-`/provider`, or `/admin` according to their stored role. These are basic welcome
-pages; feature permissions and appointment screens are separate work.
+The `Dockerfile` builds the React site and serves it with the API from one address (`backend/serve.py`, run by gunicorn). Railway builds it from `railway.json` and checks `/api/health`. The service needs:
 
-The API provides `POST /api/login`, `GET /api/session`, and `POST /api/logout`.
-Login and logout require JSON and the `X-Requested-With: AppointmentDesk` header.
-The frontend sends both through the same-origin Vite proxy.
+- A volume. The database lives on it, so data survives redeploys.
+- `APPOINTMENTS_SECRET_KEY` set to a long random value, so restarts don't sign everyone out.
 
-Run all backend tests with `cd backend && python -m unittest discover -s tests`.
+The server refuses to start without either. Create the first admin from Railway's shell with `flask admin create`; `flask providers seed-demo` adds four demo providers. Don't run `sample seed` there: its accounts have a published password.
 
-## Book an appointment (#7)
+## Project layout
 
-Sign in as a client and select a provider and time on Client home. The confirmation
-shows the provider, time, status and appointment ID. Booked times disappear. If
-another client books the selected slot first, refresh and choose another time.
-Times are displayed in the browser's local timezone. Store availability as ISO 8601
-with an explicit offset; existing naive timestamps are treated as UTC.
-
-`GET /api/booking/options` supplies the minimal provider/slot choices for this form.
-`POST /api/appointments` accepts `{"availability_id": 1}` with JSON content type and
-`X-Requested-With: AppointmentDesk`. The client ID comes only from the session.
-Both routes require a signed-in client. Missing slots return 404; past or booked
-slots return 409. SQLite transactions and the existing unique active-slot index
-prevent concurrent double booking. These endpoints are independent of #4–#6;
-full provider browsing, availability management and upcoming-appointment lists
-remain separate issues.
-
-### Run on Windows (PowerShell)
-
-In a terminal in the backend folder (Python dependencies installed):
-
-```powershell
-.\.venv\Scripts\python.exe -m flask --app app booking seed-demo
-.\.venv\Scripts\python.exe -m flask --app app run
-```
-
-The optional seed adds two demo providers and four slots for tomorrow, with random
-unpublished provider passwords. It preserves existing data and bookings. Do not use
-it for production provisioning. Repeating it on the same day does not duplicate slots.
-
-In a second terminal in the frontend folder, using Node 22.12+:
-
-```powershell
-npm ci
-npm run build
-npm run preview -- --host 127.0.0.1 --port 5173
-```
-
-Open http://127.0.0.1:5173, register a client or sign in, and book a slot. Port 5000
-is the API, not the website. Keep both terminals running. Stop Flask with Ctrl+C
-before restarting after backend edits. On environments where Vite's config bundler
-is restricted, append `--configLoader native` to the Vite build/preview command
-using Node 24. A backend restart may require signing in again.
-
-## Integration notes for issues #4, #5 and #6
-
-- #4: booking currently uses `client_only` to check the current database account.
-  When merging the approval workflow, replace this guard with its shared
-  `require_roles("client")` guard and use `g.user["id"]` instead of `g.client`.
-  Register the shared user loader before protected endpoints are called. A pending
-  or rejected advisor retains role `client` in that implementation, so checking role
-  alone is insufficient. Add tests denying booking/options for both statuses.
-  Preserve blueprint registration in app.py and the Booking component in Client home
-  when resolving the overlapping changes in App.tsx, app.py and this README.
-- #5: reuse provider IDs (`users.id`), names and descriptions from
-  `/api/booking/options`. This is a minimal booking selector, not a complete provider
-  directory. Build richer details on provider_profiles; do not duplicate accounts or
-  create another booking endpoint. Only users with role provider and a profile appear.
-- #6: reuse availability IDs, provider_id, starts_at and ends_at. The calendar already
-  groups slots by the browser's local date. Send ISO 8601 timestamps with explicit
-  offsets (prefer UTC); avoid mixing naive local timestamps with UTC. Preserve the
-  active-appointment exclusion and unique active-slot index. The booking endpoint
-  remains the authority if a displayed slot becomes unavailable.
-- Future availability writers must validate real timestamps and reject overlapping
-  intervals for a provider. The current constraint prevents booking the same slot
-  twice, but does not prevent two separately created overlapping slots. Availability
-  editing and overlap validation belong with availability management.
-- `GET /api/appointments` can be added for #8 alongside the existing POST route;
-  filter by the authenticated client's ID on the server.
-
-The calendar can navigate forward through empty months. Previous navigation stops
-at the current local month. Changing provider/month/date clears the chosen slot;
-selecting a time shows a review summary before the POST is submitted. Dates with
-no available slots remain disabled. An empty month shows a clear empty state.
-
-## Upcoming appointments (#8)
-
-Client home lists the signed-in client's future scheduled appointments, ordered
-by start time. The next one is shown as a card; each shows provider, local date and
-time range, how far away it is and confirmation number. Past, cancelled, completed
-and no-show appointments are excluded. The list refreshes after a booking, on page
-load, and when the browser tab regains focus. Failures
-show a retry action rather than claiming the user has no appointments.
-
-`GET /api/appointments` uses the session's client ID; query parameters cannot select
-another client's records. It shares booking's client guard and no-store policy.
-The #4 integration guidance above applies to this GET endpoint too. Booking PR #28 is merged; this feature branch is based on that updated main.
-
-## Provider availability (#10)
-
-Provider home has a form to add 30-minute slots: pick a date and start time in the
-device's local time zone. The browser sends the start as UTC ISO 8601 and the server
-stores both ends as UTC with an explicit offset. Below the form, providers see their
-own upcoming slots grouped by day, each marked Open or Booked with the client's
-name. New slots appear for clients in
-`/api/booking/options` right away.
-
-`GET /api/provider/availability` lists the signed-in provider's future slots.
-`POST /api/provider/availability` accepts `{"starts_at": "2026-10-22T15:00:00.000Z"}`
-with JSON content type and `X-Requested-With: AppointmentDesk`. A start without a
-time zone offset or in the past returns 400; a slot overlapping one of the
-provider's existing slots returns 409. The overlap check and insert run in one
-`BEGIN IMMEDIATE` transaction, so two requests cannot add overlapping slots. Both
-routes use the `provider_only` guard in `availability.py`; reuse it for #11 and #13.
-
-## Cancel or reschedule (#12)
-
-Each upcoming appointment has Cancel appointment and Reschedule buttons. Cancelling
-asks for confirmation on the page, sets the status to `cancelled` and keeps the row
-as history; the slot becomes bookable again. Rescheduling offers the same provider's
-open times and moves the same appointment, so the confirmation number stays the same
-and the old slot is freed. The booking section reloads after either change.
-
-`POST /api/appointments/<id>/cancel` and `POST /api/appointments/<id>/reschedule`
-(body `{"availability_id": 3}`) need JSON, the custom header and a signed-in client.
-Another client's appointment returns 404; a past or non-scheduled appointment, a
-taken slot or a past slot returns 409; a slot with another provider or the current
-slot returns 400. The schema needed no changes (#14): the status column already
-exists, and the partial unique index frees cancelled slots and blocks moving onto a
-booked one. Telling providers about changes is left to #13's appointment list.
+| Path | Contents |
+| --- | --- |
+| `backend/app.py` | App setup, registration and sign-in |
+| `backend/booking.py` | Booking options, booking, cancelling and rescheduling (clients) |
+| `backend/availability.py` | Open times (providers) |
+| `backend/appointment_management.py` | Provider appointments and outcomes, client history |
+| `backend/admin.py` | Provider applications, totals, appointments and users (admins) |
+| `backend/sample_data.py` | `sample seed` / `sample remove` |
+| `backend/schema.sql` | Database tables |
+| `frontend/src/App.tsx` | Sign-in, registration and each role's home page |
+| `frontend/src/dashboard.ts` | Shared date, filter and status helpers |
+| `docs/API.md` | Every API route, with roles and rules |
