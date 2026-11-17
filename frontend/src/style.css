@@ -114,3 +114,14 @@ button.secondary:hover { background: #edf3ef; }
 
 .check-filter { display: flex; align-items: center; gap: 10px; line-height: 1.5; }
 .check-filter input { width: 18px; min-height: 18px; margin: 0; accent-color: #203c2b; }
+
+/* Landing page (#55): link-styled buttons match the form buttons. */
+.landing-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 32px; }
+main a.button-link { display: flex; align-items: center; justify-content: center; min-height: 50px; border-radius: 8px; background: #1d1d1f; color: #fff; font-size: 14px; text-decoration: none; transition: background .16s; }
+main a.button-link:hover { background: #3a3a3d; }
+main a.button-link.secondary { background: #fff; color: #203c2b; border: 1px solid #a6b9ad; }
+main a.button-link.secondary:hover { background: #edf3ef; }
+.landing-roles { list-style: none; margin: 48px 0 0; padding: 0; display: grid; gap: 20px; }
+.landing-roles li { padding-left: 16px; border-left: 3px solid #a6b9ad; }
+.landing-roles h2 { margin: 0 0 4px; font-size: 16px; color: #203c2b; }
+.landing-roles p { margin: 0; color: #626264; font-size: 14px; line-height: 1.6; }

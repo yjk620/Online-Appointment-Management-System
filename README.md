@@ -31,7 +31,7 @@ To run the backend setup test: `cd backend && python -m unittest discover -s tes
 
 ## Login
 
-Register at `/`, then sign in at `/login`. Signed-in users are sent to `/client`,
+The landing page at `/` links to registration (`/register`) and sign in (`/login`). Signed-in users are sent to `/client`,
 `/provider`, or `/admin` according to their stored role. These are basic welcome
 pages; feature permissions and appointment screens are separate work.
 

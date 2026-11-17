@@ -33,6 +33,7 @@ export default function App() {
   const [checkingSession, setCheckingSession] = useState(true)
   const [sessionError, setSessionError] = useState(false)
   const onLoginPage = window.location.pathname === '/login'
+  const onRegisterPage = window.location.pathname === '/register'
   const onDashboard = Object.values(homes).includes(window.location.pathname)
 
   useEffect(() => {
@@ -162,9 +163,9 @@ export default function App() {
               {error && <p role="alert">{error}</p>}
               <button type="submit" disabled={submitting}>{submitting ? 'Signing in…' : 'Sign in'}</button>
             </form>
-            <p>Need an account? <a href="/">Register</a></p>
+            <p>Need an account? <a href="/register">Create one</a></p>
           </>
-        ) : (
+        ) : onRegisterPage ? (
           <>
             <h1>Create your account</h1>
             <p>Register to book appointments, or to offer them as a provider.</p>
@@ -186,6 +187,20 @@ export default function App() {
               <button type="submit" disabled={submitting}>{submitting ? 'Creating account…' : 'Create account'}</button>
             </form>
             <p>Already have an account? <a href="/login">Sign in</a></p>
+          </>
+        ) : (
+          <>
+            <h1>Book appointments without the back-and-forth.</h1>
+            <p>Appointment Desk lets you find a provider, pick an open time and manage your bookings in one place.</p>
+            <div className="landing-actions">
+              <a className="button-link" href="/register">Create account</a>
+              <a className="button-link secondary" href="/login">Sign in</a>
+            </div>
+            <ul className="landing-roles">
+              <li><h2>Clients</h2><p>Search providers, book a 30-minute time and reschedule or cancel it later.</p></li>
+              <li><h2>Providers</h2><p>Publish your open times, see who booked and record each appointment's outcome.</p></li>
+              <li><h2>Admins</h2><p>Approve new providers and keep an eye on accounts and appointment activity.</p></li>
+            </ul>
           </>
         )}
       </main>
