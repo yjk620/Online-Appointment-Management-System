@@ -2,9 +2,7 @@ import { FormEvent, useEffect, useState } from 'react'
 import Booking from './Booking'
 import UpcomingAppointments from './UpcomingAppointments'
 import AccountTypeField, { type AccountType } from './AccountTypeField'
-import ProviderApplications from './ProviderApplications'
 import AdminSummary from './AdminSummary'
-import AdminUsers from './AdminUsers'
 import ProviderAppointments from './ProviderAppointments'
 import AppointmentHistory from './AppointmentHistory'
 import { timeZoneLabel } from './dashboard'
@@ -53,10 +51,10 @@ export default function App() {
     void restoreSession()
   }, [onDashboard])
 
-  // Reload client data when the tab regains focus, so there is no Refresh button to think about.
+  // Reload the home page's data when the tab regains focus, so there is no Refresh button to think about.
   useEffect(() => {
-    if (!user || user.role === 'admin') return
-    const bump = user.role === 'client' ? setAppointmentsVersion : setProviderVersion
+    if (!user) return
+    const bump = { client: setAppointmentsVersion, provider: setProviderVersion, admin: setAdminVersion }[user.role]
     const reload = () => { if (document.visibilityState === 'visible') bump(version => version + 1) }
     document.addEventListener('visibilitychange', reload)
     return () => document.removeEventListener('visibilitychange', reload)
@@ -128,7 +126,7 @@ export default function App() {
         {user && <div className="account"><span>{user.email}</span>
           <button type="button" className="link" disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button></div>}
       </header>
-      <main className={user && user.role !== 'admin' ? 'wide' : undefined}>
+      <main className={user ? 'wide' : undefined}>
         {checkingSession ? <p role="status">Checking your session…</p> : sessionError ? (
           <><p role="alert">Could not check your session. Please try again.</p><button onClick={() => window.location.reload()}>Retry</button></>
         ) : user ? (
@@ -142,11 +140,8 @@ export default function App() {
                 <AppointmentHistory refreshVersion={appointmentsVersion} />
               </div>
             </> : user.role === 'admin' ? <>
-              <h1>Admin home</h1>
-              <p>Welcome, {user.name}.</p>
+              <h1>Hi, {user.name.split(' ')[0]}.</h1>
               <AdminSummary refreshVersion={adminVersion} />
-              <ProviderApplications onDecided={() => setAdminVersion(version => version + 1)} />
-              <AdminUsers refreshVersion={adminVersion} />
             </> : <>
               <h1>Hi, {user.name.split(' ')[0]}.</h1>
               <p>Times shown in {timeZoneLabel()}.</p>
