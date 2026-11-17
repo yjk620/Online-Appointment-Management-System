@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { whenLabel } from './dashboard'
+import { statusTag, whenLabel } from './dashboard'
 
 type Appointment = { id: number; provider_name: string; starts_at: string; ends_at: string; status: string }
 
@@ -32,12 +32,11 @@ export default function AppointmentHistory({ refreshVersion }: { refreshVersion:
       <p>All your appointments, including cancelled bookings and recorded outcomes.</p>
       {error && <><p role="alert">{error}</p><button className="secondary" disabled={loading} onClick={() => void load()}>Retry history</button></>}
       {loading ? <p role="status">Loading history...</p> : !error && (appointments.length === 0 ? <p>No appointments recorded yet.</p> :
-        <ul className="appointment-list">{appointments.map(appointment => <li key={appointment.id}>
-          <h3>{appointment.provider_name}</h3>
-          <p className="appointment-when"><time dateTime={appointment.starts_at}>{whenLabel(appointment.starts_at, appointment.ends_at)}</time></p>
-          {/* shortcut: no year shown, fine within a term; add it if history spans years */}
-          <p className="appointment-meta">{appointment.status === 'no-show' ? 'No-show' : appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)} · Confirmation #{appointment.id}</p>
-        </li>)}</ul>)}
+        <ul className="appointment-list">{appointments.map(appointment => { const tag = statusTag(appointment); return <li key={appointment.id}>
+          <h3>{appointment.provider_name}{tag && <>{' '}<span className={`tag ${tag.tone}`}>{tag.label}</span></>}</h3>
+          <p className={`appointment-when${appointment.status === 'cancelled' ? ' cancelled' : ''}`}><time dateTime={appointment.starts_at}>{whenLabel(appointment.starts_at, appointment.ends_at)}</time></p>
+          <p className="appointment-meta">Confirmation #{appointment.id}</p>
+        </li> })}</ul>)}
     </div>
   </section>
 }

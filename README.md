@@ -134,7 +134,8 @@ The #4 integration guidance above applies to this GET endpoint too. Booking PR #
 Provider home has a form to add 30-minute slots: pick a date and start time in the
 device's local time zone. The browser sends the start as UTC ISO 8601 and the server
 stores both ends as UTC with an explicit offset. Below the form, providers see their
-own upcoming slots, each marked Open or Booked. New slots appear for clients in
+own upcoming slots grouped by day, each marked Open or Booked with the client's
+name. New slots appear for clients in
 `/api/booking/options` right away.
 
 `GET /api/provider/availability` lists the signed-in provider's future slots.

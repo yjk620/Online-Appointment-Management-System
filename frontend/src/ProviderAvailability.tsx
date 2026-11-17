@@ -1,124 +1,99 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useState } from 'react'
+import { dateValue, dayLabel, groupByDay, localDay, slotDetails, timeRange, whenLabel } from './dashboard'
 
-type Slot = { id: number; starts_at: string; ends_at: string; booked: boolean }
+export type Slot = { id: number; starts_at: string; ends_at: string; booked: boolean }
 const headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'AppointmentDesk' }
 
-function localDate(value: string) {
-  return new Date(/(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? value : value.replace(' ', 'T') + 'Z')
-}
-function timeLabel(value: string) {
-  return localDate(value).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })
-}
-function todayKey() {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-}
-
-export default function ProviderAvailability({ refreshVersion = 0, onChanged }: { refreshVersion?: number; onChanged?: () => void }) {
-  const [slots, setSlots] = useState<Slot[]>([])
+// Data comes from ProviderAppointments, which reloads it through onChanged after every save.
+export default function ProviderAvailability({ slots, appointments, onChanged }: { slots: Slot[]; appointments: { starts_at: string; status: string; client_name: string }[]; onChanged: () => Promise<void> }) {
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
-  const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [added, setAdded] = useState<Slot | null>(null)
-  const [expanded, setExpanded] = useState(true)
-  const [editing, setEditing] = useState<number | null>(null)
   const [notice, setNotice] = useState('')
+  const [editing, setEditing] = useState<Slot | null>(null)
+  const [removing, setRemoving] = useState<number | null>(null)
 
-  async function load() {
-    setLoading(true)
-    setError('')
-    try {
-      const response = await fetch('/api/provider/availability', { cache: 'no-store' })
-      if (response.status === 401) { window.location.replace('/login'); return }
-      if (!response.ok) throw new Error('Could not load your availability. Please retry.')
-      setSlots(((await response.json()) as { slots: Slot[] }).slots)
-    } catch (error) { setError(error instanceof Error ? error.message : 'Could not load your availability.') }
-    finally { setLoading(false) }
-  }
-  useEffect(() => { void load() }, [refreshVersion])
+  function reset() { setEditing(null); setDate(''); setTime('') }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (busy) return
-    setBusy(true)
-    setError('')
-    setAdded(null)
+    setBusy(true); setError(''); setNotice('')
     try {
       // The browser reads the date and time in the provider's local time zone; the API stores UTC.
       const startsAt = new Date(`${date}T${time}`).toISOString()
-      const response = await fetch(editing === null ? '/api/provider/availability' : `/api/provider/availability/${editing}`, { method: editing === null ? 'POST' : 'PATCH', headers, body: JSON.stringify({ starts_at: startsAt }) })
+      const response = await fetch(editing ? `/api/provider/availability/${editing.id}` : '/api/provider/availability', { method: editing ? 'PATCH' : 'POST', headers, body: JSON.stringify({ starts_at: startsAt }) })
       if (response.status === 401) { window.location.replace('/login'); return }
-      const result = (await response.json()) as { error?: string; slot: Slot }
-      if (!response.ok) { setError(result.error ?? 'Could not add this time. Please try again.'); return }
-      setAdded(result.slot)
-      setNotice(editing === null ? 'Availability added.' : 'Availability updated.')
-      setEditing(null)
-      setTime('')
-      await load()
-      onChanged?.()
-    } catch { setError('Could not add this time. Please try again.') }
+      const result = (await response.json()) as { error?: string }
+      if (!response.ok) { setError(result.error ?? 'Could not save this time. Please try again.'); return }
+      setNotice(editing ? 'Time updated.' : 'Time added.')
+      if (editing) reset(); else setTime('')
+      await onChanged()
+    } catch { setError('Could not save this time. Please try again.') }
     finally { setBusy(false) }
   }
 
   function edit(slot: Slot) {
-    const start = localDate(slot.starts_at)
-    setDate(`${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`)
+    const start = dateValue(slot.starts_at)
+    setDate(localDay(start))
     setTime(`${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`)
-    setEditing(slot.id)
-    setAdded(null)
-    setError('')
-    setNotice('')
+    setEditing(slot); setRemoving(null); setError(''); setNotice('')
     document.getElementById('slot-date')?.focus()
   }
 
   async function remove(slot: Slot) {
-    if (busy || !window.confirm('Remove this available time?')) return
-    setBusy(true)
-    setError('')
-    setNotice('')
+    if (busy) return
+    setBusy(true); setError(''); setNotice('')
     try {
       const response = await fetch(`/api/provider/availability/${slot.id}`, { method: 'DELETE', headers, body: '{}' })
       if (response.status === 401) { window.location.replace('/login'); return }
       const result = await response.json() as { error?: string }
       if (!response.ok) { setError(result.error ?? 'Could not remove this time.'); return }
-      if (editing === slot.id) { setEditing(null); setDate(''); setTime('') }
-      setNotice('Availability removed.')
-      await load()
-      onChanged?.()
+      if (editing?.id === slot.id) reset()
+      setRemoving(null)
+      setNotice('Time removed.')
+      await onChanged()
     } catch { setError('Could not remove this time. Please retry.') }
     finally { setBusy(false) }
   }
 
-  return <section aria-labelledby="availability-title">
-    <h2 id="availability-title"><button className="section-toggle" type="button" aria-expanded={expanded} aria-controls="availability-content" onClick={() => setExpanded(open => !open)}>
-      <span>Your availability{!loading ? ` (${slots.length})` : ''}</span>
-    </button></h2>
-    <div id="availability-content" hidden={!expanded}>
-      <p>Add or edit 30-minute times clients can book. Times use your device's local time zone.</p>
-      <p>Slots with appointment history cannot be edited or removed, so recorded appointment times stay accurate.</p>
-      <form onSubmit={submit}>
-        <p><label htmlFor="slot-date">Date</label><br />
-          <input id="slot-date" type="date" min={todayKey()} value={date} onChange={event => setDate(event.target.value)} required disabled={busy} /></p>
-        <p><label htmlFor="slot-time">Start time</label><br />
-          <input id="slot-time" type="time" value={time} onChange={event => setTime(event.target.value)} required disabled={busy} /></p>
-        {error && <p role="alert">{error}</p>}
-        {notice && <p role="status">{notice}{added ? ` ${localDate(added.starts_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}, ${timeLabel(added.starts_at)} - ${timeLabel(added.ends_at)}.` : ''}</p>}
-        <button type="submit" disabled={busy}>{busy ? 'Saving...' : editing === null ? 'Add 30-minute slot' : 'Save changed time'}</button>
-        {editing !== null && <button type="button" className="secondary" disabled={busy} onClick={() => { setEditing(null); setDate(''); setTime('') }}>Cancel editing</button>}
-      </form>
-      <h3>Upcoming times</h3>
-      {loading ? <p role="status">Loading your availability...</p> : slots.length === 0 ? <p>You have no upcoming times yet. Add one above.</p> :
-        <ul className="appointment-list">{slots.map(slot => <li key={slot.id}>
-          <p><time dateTime={slot.starts_at}>{localDate(slot.starts_at).toLocaleDateString(undefined, { dateStyle: 'full' })}</time></p>
-          <p>{timeLabel(slot.starts_at)} - {timeLabel(slot.ends_at)}</p>
-          <p className={slot.booked ? 'slot-state booked' : 'slot-state'}>{slot.booked ? 'Booked' : 'Open'}</p>
-          <div className="appointment-actions">
-            <button type="button" className="secondary" disabled={busy || slot.booked} onClick={() => edit(slot)} aria-label={`Edit time on ${localDate(slot.starts_at).toLocaleString()}`}>Edit time</button>
-            <button type="button" className="secondary" disabled={busy || slot.booked} onClick={() => void remove(slot)} aria-label={`Remove time on ${localDate(slot.starts_at).toLocaleString()}`}>Remove</button>
-          </div>
-        </li>)}</ul>}
-    </div>
+  const days = groupByDay(slotDetails(slots, appointments))
+  return <section className="side availability" aria-labelledby="availability-title">
+    <h2 id="availability-title">Your availability</h2>
+    <p className="booking-step">Add 30-minute times clients can book.</p>
+    <form onSubmit={submit}>
+      {editing && <p className="editing-note">Editing {whenLabel(editing.starts_at, editing.ends_at)}</p>}
+      <div className="slot-form">
+        <p><label htmlFor="slot-date">Date</label><input id="slot-date" type="date" min={localDay(new Date())} value={date} onChange={event => setDate(event.target.value)} required disabled={busy} /></p>
+        <p><label htmlFor="slot-time">Start time</label><input id="slot-time" type="time" step="1800" value={time} onChange={event => setTime(event.target.value)} required disabled={busy} /></p>
+        <button type="submit" disabled={busy}>{busy ? 'Saving...' : editing ? 'Save' : 'Add slot'}</button>
+      </div>
+      {editing && <button type="button" className="link" disabled={busy} onClick={reset}>Cancel</button>}
+      {error && <p role="alert">{error}</p>}
+      {notice && <p role="status" className="notice">{notice}</p>}
+    </form>
+    {days.length === 0 ? <p>No upcoming times yet. Add one above.</p> : days.map(group => <div key={group.day} className="slot-day">
+      <h3>{dayLabel(group.items[0].starts_at)}</h3>
+      <ul>{group.items.map(slot => <li key={slot.id} className={editing?.id === slot.id ? 'editing' : undefined}>
+        <span className="slot-time">{timeRange(slot.starts_at, slot.ends_at)}</span>
+        {slot.booked ? <span className="slot-state booked">Booked{slot.client ? ` · ${slot.client}` : ''}</span> : <>
+          {slot.locked ? <span className="slot-state locked">
+            Open · <svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d="M5 7V5a3 3 0 0 1 6 0v2h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm1.5 0h3V5a1.5 1.5 0 0 0-3 0z"/></svg>Locked
+                </span> : <span className="slot-state">Open</span>}
+          {/* Slots with any booking history can't be changed (API rule), so they get no links. */}
+          {/* Confirming swaps the links in place: red Remove takes Edit's spot, so a double-click lands on Keep. */}
+          {!slot.locked && (removing === slot.id ? <span className="slot-links">
+            <button type="button" className="link danger" disabled={busy} onClick={() => void remove(slot)} aria-label={`Confirm remove ${whenLabel(slot.starts_at, slot.ends_at)}`}>{busy ? 'Removing...' : 'Remove'}</button>
+            <button type="button" className="link" disabled={busy} onClick={() => setRemoving(null)}>Keep</button>
+          </span> : <span className="slot-links">
+            <button type="button" className="link" disabled={busy} onClick={() => edit(slot)} aria-label={`Edit ${whenLabel(slot.starts_at, slot.ends_at)}`}>Edit</button>
+            <button type="button" className="link" disabled={busy} onClick={() => { setRemoving(slot.id); setNotice('') }} aria-label={`Remove ${whenLabel(slot.starts_at, slot.ends_at)}`}>Remove</button>
+          </span>)}
+        </>}
+      </li>)}</ul>
+    </div>)}
+    {days.some(group => group.items.some(slot => !slot.booked && slot.locked)) &&
+      <p className="slot-note">Locked times had a booking that was cancelled. Clients can still book them, but you can't edit or remove them.</p>}
   </section>
 }

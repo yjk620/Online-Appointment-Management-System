@@ -122,20 +122,20 @@ button.link { flex: none; width: auto; min-height: 0; padding: 4px 0; background
 button.link:hover { background: none; text-decoration-color: currentColor; }
 
 main.wide { width: min(1040px, calc(100% - 40px)); }
-.client-home { display: grid; gap: 24px; margin-top: 28px; }
-.client-home h2 { margin: 0 0 12px; }
+.home-grid { display: grid; gap: 24px; margin-top: 28px; }
+.home-grid h2 { margin: 0 0 12px; }
 .appointment-card { padding: 18px; border: 1px solid #a6b9ad; border-radius: 12px; background: #f2f6f3; }
 .appointment-card h3, .appointment-list h3 { margin: 0 0 6px; }
 .appointment-when { margin: 0; font-size: 16px; font-weight: 600; }
 .appointment-meta { margin: 4px 0 0; color: #626264; font-size: 13px; }
 .booking-section form { margin-top: 0; }
 .booking-step { margin-top: 0; color: #626264; }
-/* Wide screens: next appointment, later list and history on the left; booking spans the right.
+/* Wide screens: appointment sections on the left; booking or availability (.side) spans the right.
    The 1fr last row soaks up booking's height so the left column stays packed. */
 @media (min-width: 900px) {
-  .client-home { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: 48px; align-items: start; }
-  .client-home > * { grid-column: 1; }
-  .client-home > .booking-section { grid-column: 2; grid-row: 1 / span 3; }
+  .home-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: repeat(4, auto) 1fr; column-gap: 48px; align-items: start; }
+  .home-grid > * { grid-column: 1; }
+  .home-grid > .side { grid-column: 2; grid-row: 1 / span 5; }
 }
 
 /* Accordions: the toggle bar and its content share one bordered box. */
@@ -144,7 +144,7 @@ section:has(> h2 > .section-toggle) { border: 1px solid #d4d4d2; border-radius: 
 section:has(> h2 > .section-toggle) > h2 { margin: 0; }
 section:has(> h2 > .section-toggle) .section-toggle { border: 0; border-radius: 0; }
 section:has(> h2 > .section-toggle) > h2 + * { margin: 0; padding: 16px; border-top: 1px solid #d4d4d2; }
-.client-home > section { margin-block: 0; }
+.home-grid > section { margin-block: 0; }
 
 /* Signed-in pages: the hero gap is for the centred sign-in form, not dashboards. */
 main.wide { margin-top: 40px; }
@@ -173,3 +173,40 @@ button.destructive:hover { background: #fbebeb; }
 header > a { white-space: nowrap; }
 @media (max-width: 540px) { .account span { display: none; } }
 .appointment-actions button { min-height: 44px; }
+
+/* Provider home */
+.home-summary { margin: 6px 0 0; color: #626264; font-size: 15px; }
+.needs-outcome .appointment-list li { border-color: #c9a227; background: #fffbea; }
+.needs-outcome .appointment-change { background: #fff; border: 1px solid #ecdc9c; }
+.needs-outcome button.secondary { border-color: #8a8a88; color: #1d1d1f; }
+.filter-row { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 16px; }
+.filter-row p { flex: 1 1 140px; margin: 0; }
+.filter-row input, .filter-row select { height: 44px; min-height: 0; padding: 0 12px; border-radius: 8px; }
+.slot-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.slot-form p { flex: 1 1 140px; margin: 0; }
+.slot-form button[type='submit'] { flex: 0 0 auto; width: auto; padding-inline: 20px; }
+.availability form { margin: 0 0 24px; }
+.availability form [role='alert'], .availability form .notice { margin: 12px 0 0; }
+.editing-note { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: #203c2b; }
+.slot-day h3 { margin: 20px 0 6px; font-size: 15px; }
+.slot-day ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid #e4e4e2; }
+.slot-day li { display: grid; grid-template-columns: 10.5em 1fr auto; align-items: center; gap: 4px 12px; min-height: 48px; border-bottom: 1px solid #e4e4e2; font-size: 14px; }
+.slot-day li.editing { background: #f2f6f3; }
+.slot-time { font-variant-numeric: tabular-nums; }
+.slot-day .slot-state { background: none; padding: 0; font-weight: 400; color: #626264; }
+.slot-day .slot-state.booked { background: none; color: #203c2b; font-weight: 600; }
+.slot-links { display: inline-flex; align-items: center; gap: 4px; color: #626264; }
+/* Short words like Edit get a 44px-wide hit area too (HIG buttons: 44x44 pt). */
+.slot-links button.link { min-width: 44px; justify-content: center; }
+.slot-note { margin: 12px 0 0; color: #626264; font-size: 13px; }
+button.link.danger { color: #a12c2c; text-decoration-color: #a12c2c; }
+
+/* Status tags: colour always paired with a word. Text/background contrast is 4.5:1 or better. */
+.tag { display: inline-block; margin-left: 10px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; vertical-align: 2px; }
+.tag.green { background: #203c2b; color: #fff; }
+.tag.red { background: #fbebeb; color: #922d2d; }
+.tag.grey { background: #ececec; color: #48484a; }
+.appointment-when.cancelled time { text-decoration: line-through; color: #626264; }
+.appointment-meta .soon { color: #203c2b; font-weight: 600; }
+.slot-state.locked svg { margin: 0 3px 0 1px; vertical-align: -1px; }
+.next-appointment .appointment-card + .appointment-card { margin-top: 12px; }

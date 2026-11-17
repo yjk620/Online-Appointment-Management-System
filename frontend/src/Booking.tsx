@@ -89,7 +89,7 @@ export default function Booking({ refreshVersion, onBooked }: { refreshVersion: 
     } catch { setError('Could not confirm the booking. Refresh available times before retrying.') }
     finally { setBusy(false) }
   }
-  return <section className="booking-section" aria-labelledby="booking-title">
+  return <section className="booking-section side" aria-labelledby="booking-title">
     <h2 id="booking-title">Book an appointment</h2>
     {loadError && <><p role="alert">{loadError}</p><button type="button" className="secondary" disabled={loading} onClick={() => void load()}>Retry</button></>}
     {error && <p role="alert">{error}</p>}

@@ -1,8 +1,10 @@
 # Edit/remove availability (#11)
 
-Provider home reuses the existing date/time form to edit a future open slot.
-Remove asks for confirmation. Mutations refresh the list; clients see changes
-on their next availability refresh. Errors preserve the form for retry.
+Your availability lists future slots grouped by day. Edit loads a slot into the
+date/time form (the form names the slot being edited and the row is highlighted);
+Remove asks for confirmation in the row: Edit / Remove become a red Remove and Keep. Booked rows show the client's name.
+Mutations refresh the list; clients see changes on their next reload. Errors
+preserve the form for retry.
 
 - `PATCH /api/provider/availability/<id>` accepts `starts_at` with an ISO offset
   and keeps the existing 30-minute duration.
@@ -11,7 +13,8 @@ on their next availability refresh. Errors preserve the form for retry.
 - Only the owner's future slots may change. Overlaps return 409.
 - Any appointment history blocks edits/removal, even after cancellation. This
   preserves the date/time attached to recorded appointments; add a new slot
-  instead. Active booked slots also disable the controls in the UI.
+  instead. The UI hides Edit/Remove on these slots: booked rows show the client,
+  and open slots with a cancelled booking read "Open · Locked" with a lock icon, and a note under the list explains why. The start time picker steps in 30 minutes.
 - Transactions serialize checks and mutations against bookings.
 
 Run: `cd backend && python -m unittest discover -s tests -v`.

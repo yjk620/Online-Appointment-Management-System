@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { relativeLabel, timeZoneLabel, upcoming, whenLabel } from '../src/dashboard.ts'
+import { dayLabel, relativeLabel, timeRange, timeZoneLabel, upcoming, whenLabel } from '../src/dashboard.ts'
 
 process.env.TZ = 'America/Toronto'
 const now = Date.parse('2026-11-03T15:00:00Z')
@@ -34,4 +34,14 @@ test('next-appointment card says how far away the booking is in calendar days', 
 test('card time line shows weekday, date and time range, and the zone is named', () => {
   assert.match(whenLabel('2026-11-18T13:00:00Z', '2026-11-18T13:30:00Z'), /^Wed, Nov 18 · 8:00\s*–\s*8:30\s(AM|a\.m\.)$/)
   assert.equal(timeZoneLabel(), 'Eastern Time')
+})
+test('started appointments read as time ago, not hundreds of minutes', () => {
+  assert.equal(relativeLabel('2026-11-03T14:40:00Z', now), '20 minutes ago')
+  assert.equal(relativeLabel('2026-11-03T12:45:00Z', now), '2 hours ago')
+  assert.equal(relativeLabel('2026-11-02T15:00:00Z', now), 'yesterday')
+})
+test('midnight-crossing slots stay short and other years show the year', () => {
+  assert.match(timeRange('2026-11-22T04:30:00Z', '2026-11-22T05:00:00Z'), /^11:30\s(PM|p\.m\.) – 12:00\s(AM|a\.m\.)$/)
+  assert.equal(dayLabel('2026-11-10T15:00:00Z', now), 'Tue, Nov 10')
+  assert.equal(dayLabel('2025-11-10T15:00:00Z', now), 'Mon, Nov 10, 2025')
 })

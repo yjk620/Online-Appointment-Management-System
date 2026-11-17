@@ -1,9 +1,11 @@
 # Provider appointment management (#13)
 
-Requires the appointment API PR (#15). Provider home now has Upcoming and Past
-and cancelled views, sorted by date/time. Each booking shows the client, email,
-local start/end, status and confirmation number. Client home has collapsible
-appointment history with a refresh action to see the latest provider outcome.
+Requires the appointment API PR (#15). Provider home shows ended, still-scheduled appointments
+under Needs an outcome, then the next (tagged Now while in progress) and later
+appointments, and a History list (completed, no-show, cancelled) with date and
+status filters. Each booking shows the client,
+email, local start/end, status and confirmation number. Client home has collapsible
+appointment history that reloads to show the latest provider outcome.
 
 An outcome can be recorded once its start time has passed. Completed and No-show
 require explicit confirmation and cannot be changed again. Cancelled records stay
@@ -13,8 +15,8 @@ the API directly.
 Manual checklist (record results when executed):
 
 - Provider signs in and sees only their bookings; another provider sees a different list.
-- Upcoming view is chronological; past/cancelled view retains cancelled bookings.
-- Choose Mark completed or Mark no-show on a past scheduled appointment. Cancel
+- Upcoming appointments are chronological; History keeps cancelled bookings.
+- Choose Mark completed or Mark no-show on an in-progress or ended scheduled appointment. Cancel
   the confirmation first, then confirm: only the confirmed action saves.
 - Client refreshes Appointment history and sees the recorded outcome.
 - Signed-out access redirects to login; fetch failure displays an error and refresh remains available.
