@@ -86,8 +86,8 @@ export default function UpcomingAppointments({ refreshVersion, onChanged }: { re
         <p>Cancel this appointment? The time becomes available to other clients.</p>
         {actionError && <p role="alert">{actionError}</p>}
         <div className="appointment-actions">
-          <button type="button" className="destructive" disabled={busy} onClick={() => void send(item, 'cancel')}>{busy ? 'Cancelling...' : 'Yes, cancel'}</button>
-          <button type="button" className="secondary" disabled={busy} onClick={close}>Keep it</button>
+          <button type="button" className="destructive" disabled={busy} onClick={() => void send(item, 'cancel')}>{busy ? 'Cancelling...' : 'Cancel appointment'}</button>
+          <button type="button" className="secondary" disabled={busy} onClick={close}>Keep appointment</button>
         </div>
       </div> : <div className="appointment-change" role="group" aria-label="Choose a new time">
         {openSlots === null ? <p role="status">Loading open times...</p> : openSlots.length === 0 ? <p>No other times are open with {item.provider_name} right now.</p> : <p>
