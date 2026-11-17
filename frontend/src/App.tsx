@@ -122,7 +122,7 @@ export default function App() {
   return (
     <>
       <header><a href="/">Appointment Desk</a></header>
-      <main>
+      <main className={user?.role === 'provider' ? 'wide' : undefined}>
         {checkingSession ? <p role="status">Checking your session…</p> : sessionError ? (
           <><p role="alert">Could not check your session. Please try again.</p><button onClick={() => window.location.reload()}>Retry</button></>
         ) : user ? (
@@ -143,10 +143,10 @@ export default function App() {
               <AdminSummary refreshVersion={adminVersion} />
               <ProviderApplications onDecided={() => setAdminVersion(version => version + 1)} />
               <AdminUsers refreshVersion={adminVersion} />
-            </> : <>
+            </> : <div className="provider-board">
               <ProviderAppointments refreshVersion={providerVersion} onChanged={() => setProviderVersion(value => value + 1)} />
               <ProviderAvailability refreshVersion={providerVersion} onChanged={() => setProviderVersion(value => value + 1)} />
-            </>}
+            </div>}
             {error && <p role="alert">{error}</p>}
             <button disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button>
           </>

@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
+import { localDay } from './dashboard'
 
 type Slot = { id: number; starts_at: string; ends_at: string; booked: boolean }
 const headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'AppointmentDesk' }
@@ -8,6 +9,15 @@ function localDate(value: string) {
 }
 function timeLabel(value: string) {
   return localDate(value).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })
+}
+// Slots arrive sorted by start time, so grouping in order keeps days and times chronological.
+function groupByDay(slots: Slot[]) {
+  const days = new Map<string, Slot[]>()
+  for (const slot of slots) {
+    const key = localDay(localDate(slot.starts_at))
+    days.set(key, [...(days.get(key) ?? []), slot])
+  }
+  return [...days]
 }
 function todayKey() {
   const now = new Date()
@@ -93,32 +103,35 @@ export default function ProviderAvailability({ refreshVersion = 0, onChanged }: 
 
   return <section aria-labelledby="availability-title">
     <h2 id="availability-title"><button className="section-toggle" type="button" aria-expanded={expanded} aria-controls="availability-content" onClick={() => setExpanded(open => !open)}>
-      <span>Your availability{!loading ? ` (${slots.length})` : ''}</span><span aria-hidden="true">{expanded ? '-' : '+'}</span>
+      <span>Your availability{!loading ? ` (${slots.length})` : ''}</span><span aria-hidden="true">{expanded ? '−' : '+'}</span>
     </button></h2>
     <div id="availability-content" hidden={!expanded}>
-      <p>Add or edit 30-minute times clients can book. Times use your device's local time zone.</p>
-      <p>Slots with appointment history cannot be edited or removed, so recorded appointment times stay accurate.</p>
-      <form onSubmit={submit}>
+      <p className="section-help">Add 30-minute times clients can book, in your local time zone. Booked times can't be edited or removed, so recorded appointments stay accurate.</p>
+      <form className="slot-form" onSubmit={submit}>
         <p><label htmlFor="slot-date">Date</label><br />
           <input id="slot-date" type="date" min={todayKey()} value={date} onChange={event => setDate(event.target.value)} required disabled={busy} /></p>
         <p><label htmlFor="slot-time">Start time</label><br />
           <input id="slot-time" type="time" value={time} onChange={event => setTime(event.target.value)} required disabled={busy} /></p>
         {error && <p role="alert">{error}</p>}
-        {notice && <p role="status">{notice}{added ? ` ${localDate(added.starts_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}, ${timeLabel(added.starts_at)} - ${timeLabel(added.ends_at)}.` : ''}</p>}
-        <button type="submit" disabled={busy}>{busy ? 'Saving...' : editing === null ? 'Add 30-minute slot' : 'Save changed time'}</button>
-        {editing !== null && <button type="button" className="secondary" disabled={busy} onClick={() => { setEditing(null); setDate(''); setTime('') }}>Cancel editing</button>}
+        {notice && <p role="status" className="notice">{notice}{added ? ` ${localDate(added.starts_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}, ${timeLabel(added.starts_at)} - ${timeLabel(added.ends_at)}.` : ''}</p>}
+        <div className="appointment-actions">
+          <button type="submit" disabled={busy}>{busy ? 'Saving...' : editing === null ? 'Add 30-minute slot' : 'Save changed time'}</button>
+          {editing !== null && <button type="button" className="secondary" disabled={busy} onClick={() => { setEditing(null); setDate(''); setTime('') }}>Cancel editing</button>}
+        </div>
       </form>
       <h3>Upcoming times</h3>
-      {loading ? <p role="status">Loading your availability...</p> : slots.length === 0 ? <p>You have no upcoming times yet. Add one above.</p> :
-        <ul className="appointment-list">{slots.map(slot => <li key={slot.id}>
-          <p><time dateTime={slot.starts_at}>{localDate(slot.starts_at).toLocaleDateString(undefined, { dateStyle: 'full' })}</time></p>
-          <p>{timeLabel(slot.starts_at)} - {timeLabel(slot.ends_at)}</p>
-          <p className={slot.booked ? 'slot-state booked' : 'slot-state'}>{slot.booked ? 'Booked' : 'Open'}</p>
-          <div className="appointment-actions">
-            <button type="button" className="secondary" disabled={busy || slot.booked} onClick={() => edit(slot)} aria-label={`Edit time on ${localDate(slot.starts_at).toLocaleString()}`}>Edit time</button>
-            <button type="button" className="secondary" disabled={busy || slot.booked} onClick={() => void remove(slot)} aria-label={`Remove time on ${localDate(slot.starts_at).toLocaleString()}`}>Remove</button>
-          </div>
-        </li>)}</ul>}
+      {loading ? <p role="status">Loading your availability...</p> : slots.length === 0 ? <p className="empty-state">You have no upcoming times yet. Add one above.</p> :
+        groupByDay(slots).map(([day, daySlots]) => <div className="slot-day" key={day}>
+          <h4><time dateTime={day}>{localDate(daySlots[0].starts_at).toLocaleDateString(undefined, { dateStyle: 'full' })}</time></h4>
+          <ul className="slot-list">{daySlots.map(slot => <li key={slot.id} className={editing === slot.id ? 'editing' : undefined}>
+            <span className="slot-time">{timeLabel(slot.starts_at)} - {timeLabel(slot.ends_at)}</span>
+            <span className={slot.booked ? 'slot-state booked' : 'slot-state'}>{slot.booked ? 'Booked' : 'Open'}</span>
+            {!slot.booked && <span className="slot-actions">
+              <button type="button" className="secondary" disabled={busy} onClick={() => edit(slot)} aria-label={`Edit time on ${localDate(slot.starts_at).toLocaleString()}`}>Edit</button>
+              <button type="button" className="secondary" disabled={busy} onClick={() => void remove(slot)} aria-label={`Remove time on ${localDate(slot.starts_at).toLocaleString()}`}>Remove</button>
+            </span>}
+          </li>)}</ul>
+        </div>)}
     </div>
   </section>
 }
