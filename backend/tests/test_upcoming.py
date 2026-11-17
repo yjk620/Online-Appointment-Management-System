@@ -45,6 +45,6 @@ class UpcomingTest(unittest.TestCase):
     def test_chronological_order(self):
         with closing(sqlite3.connect(self.database)) as db, db:
             for id, start, end in ((10, '2099-02-02T10:00:00+00:00', '2099-02-02T10:30:00+00:00'), (11, '2099-02-01T10:00:00+00:00', '2099-02-01T10:30:00+00:00')):
-                db.execute('INSERT INTO availability VALUES(?,?,?,?)', (id, 3, start, end))
+                db.execute('INSERT INTO availability(id,provider_id,starts_at,ends_at) VALUES(?,?,?,?)', (id, 3, start, end))
                 db.execute('INSERT INTO appointments(id,client_id,availability_id) VALUES(?,1,?)', (id, id))
         self.assertEqual([row['id'] for row in self.client.get('/api/appointments').json['appointments']], [11, 10])

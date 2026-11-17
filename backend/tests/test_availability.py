@@ -43,10 +43,15 @@ class ProviderAvailabilityTest(unittest.TestCase):
         self.identify(self.client, 3)
         start = self.future()
         self.assertEqual(self.create(iso(start)).status_code, 201)
-        for offset in (0, 15, -15):
-            self.assertEqual(self.create(iso(start + timedelta(minutes=offset))).status_code, 409)
+        self.assertEqual(self.create(iso(start)).status_code, 409)
         self.assertEqual(self.create(iso(start + timedelta(minutes=30))).status_code, 201)
         self.assertEqual(self.create(iso(start - timedelta(minutes=30))).status_code, 201)
+
+    def test_start_must_be_on_the_hour_or_half_hour(self):
+        self.identify(self.client, 3)
+        for minutes, seconds in ((15, 0), (45, 0), (20, 0), (0, 30)):
+            self.assertEqual(self.create(iso(self.future() + timedelta(minutes=minutes, seconds=seconds))).status_code, 400)
+        self.assertEqual(self.create(iso(self.future() + timedelta(minutes=30))).status_code, 201)
 
     def test_overlap_check_covers_existing_demo_slots(self):
         self.identify(self.client, 3)
@@ -64,7 +69,7 @@ class ProviderAvailabilityTest(unittest.TestCase):
     def test_provider_lists_only_own_future_slots_with_booked_flag(self):
         with closing(sqlite3.connect(self.database)) as db, db:
             db.execute("INSERT INTO users VALUES(5,'other','5@example.com','unused','provider')")
-            db.execute('INSERT INTO availability VALUES(3,5,?,?)', (iso(self.future()), iso(self.future() + timedelta(minutes=30))))
+            db.execute('INSERT INTO availability(id,provider_id,starts_at,ends_at) VALUES(3,5,?,?)', (iso(self.future()), iso(self.future() + timedelta(minutes=30))))
             db.execute('INSERT INTO appointments(client_id,availability_id) VALUES(1,1)')
         self.identify(self.client, 3)
         slots = self.client.get('/api/provider/availability').json['slots']

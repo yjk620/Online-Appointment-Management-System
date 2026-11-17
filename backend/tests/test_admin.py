@@ -124,7 +124,7 @@ class AdminTest(unittest.TestCase):
         client_id, provider_id = (self.query("SELECT id FROM users WHERE email = ?", f"{r}@example.com")[0][0] for r in ("client", "provider"))
         with closing(sqlite3.connect(self.database)) as db, db:
             for slot, status in enumerate(("scheduled", "scheduled", "completed", "cancelled"), start=1):
-                db.execute("INSERT INTO availability VALUES (?, ?, ?, ?)", (slot, provider_id, f"2099-01-0{slot}T10:00:00+00:00", f"2099-01-0{slot}T10:30:00+00:00"))
+                db.execute("INSERT INTO availability(id,provider_id,starts_at,ends_at) VALUES(?, ?, ?, ?)", (slot, provider_id, f"2099-01-0{slot}T10:00:00+00:00", f"2099-01-0{slot}T10:30:00+00:00"))
                 db.execute("INSERT INTO appointments (client_id, availability_id, status) VALUES (?, ?, ?)", (client_id, slot, status))
         response = self.summary()
         self.assertEqual(response.status_code, 200)

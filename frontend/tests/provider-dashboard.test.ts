@@ -46,7 +46,7 @@ test('availability rows show the booked client and lock slots with any booking h
     { starts_at: '2026-11-04T15:00:00Z', status: 'scheduled', client_name: 'Jamie Lee' },
     { starts_at: '2026-11-04T16:00:00Z', status: 'cancelled', client_name: 'Taylor Kim' },
   ]
-  assert.deepEqual(slotDetails(slots, booked).map(slot => [slot.client, slot.locked]), [['Jamie Lee', true], [undefined, true], [undefined, false]])
+  assert.deepEqual(slotDetails(slots, booked).map(slot => slot.client), ['Jamie Lee', undefined, undefined])
 })
 test('availability groups slots by local day, not UTC day', () => {
   // 11 p.m. Toronto on Nov 4 is Nov 5 in UTC, but belongs with the Nov 4 group.

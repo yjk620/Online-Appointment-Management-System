@@ -18,3 +18,7 @@ def init_db():
     with closing(connect()) as connection:
         schema_path = Path(__file__).with_name("schema.sql")
         connection.executescript(schema_path.read_text(encoding="utf-8"))
+        # Databases created before #64 lack removed_at; adding a nullable column keeps every existing row.
+        if "removed_at" not in [row["name"] for row in connection.execute("PRAGMA table_info(availability)")]:
+            connection.execute("ALTER TABLE availability ADD COLUMN removed_at TEXT")
+            connection.commit()

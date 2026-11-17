@@ -22,9 +22,9 @@ class BookingTest(unittest.TestCase):
             for id, role in ((1, 'client'), (2, 'client'), (3, 'provider'), (4, 'admin')):
                 db.execute('INSERT INTO users VALUES(?,?,?,?,?)', (id, role, f'{id}@example.com', 'unused', role))
             db.execute('INSERT INTO provider_profiles(user_id) VALUES(3)')
-            start = datetime.now(timezone.utc) + timedelta(days=1)
+            start = (datetime.now(timezone.utc) + timedelta(days=1)).replace(minute=0, second=0, microsecond=0)
             for id, time in ((1, start), (2, start - timedelta(days=2))):
-                db.execute('INSERT INTO availability VALUES(?,?,?,?)', (id, 3, time.isoformat(), (time + timedelta(minutes=30)).isoformat()))
+                db.execute('INSERT INTO availability(id,provider_id,starts_at,ends_at) VALUES(?,?,?,?)', (id, 3, time.isoformat(), (time + timedelta(minutes=30)).isoformat()))
         self.identify(self.client, 1)
 
     def tearDown(self):
