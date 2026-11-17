@@ -119,9 +119,10 @@ no available slots remain disabled. An empty month shows a clear empty state.
 ## Upcoming appointments (#8)
 
 Client home lists the signed-in client's future scheduled appointments, ordered
-by start time. Each card shows provider, local date/time, status and confirmation
-number. Past, cancelled, completed and no-show appointments are excluded. The list
-refreshes after a booking, on page load, and with Refresh appointments. Failures
+by start time. The next one is shown as a card; each shows provider, local date and
+time range, how far away it is and confirmation number. Past, cancelled, completed
+and no-show appointments are excluded. The list refreshes after a booking, on page
+load, and when the browser tab regains focus. Failures
 show a retry action rather than claiming the user has no appointments.
 
 `GET /api/appointments` uses the session's client ID; query parameters cannot select

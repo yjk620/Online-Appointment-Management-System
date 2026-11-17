@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { whenLabel } from './dashboard'
 
 type Appointment = { id: number; provider_name: string; starts_at: string; ends_at: string; status: string }
 
@@ -6,12 +7,11 @@ export function appointmentDate(value: string) {
   return new Date(/(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? value : value.replace(' ', 'T') + 'Z')
 }
 
-export default function AppointmentHistory({ refreshVersion, openRequest = 0 }: { refreshVersion: number; openRequest?: number }) {
+export default function AppointmentHistory({ refreshVersion }: { refreshVersion: number }) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState(false)
-  useEffect(() => { if (openRequest > 0) setExpanded(true) }, [openRequest])
   async function load() {
     setLoading(true)
     setError('')
@@ -25,17 +25,18 @@ export default function AppointmentHistory({ refreshVersion, openRequest = 0 }: 
   }
   useEffect(() => { if (expanded) void load() }, [expanded, refreshVersion])
   return <section aria-labelledby="history-title">
-    <h2 id="history-title"><button className="section-toggle" aria-expanded={expanded} aria-controls="history-content" onClick={() => setExpanded(open => !open)}>Appointment history</button></h2>
+    <h2 id="history-title"><button className="section-toggle" aria-expanded={expanded} aria-controls="history-content" onClick={() => setExpanded(open => !open)}>
+      <span>Appointment history</span>
+    </button></h2>
     <div id="history-content" hidden={!expanded}>
       <p>All your appointments, including cancelled bookings and recorded outcomes.</p>
-      <button className="secondary" disabled={loading} onClick={() => void load()}>Refresh history</button>
-      {error && <p role="alert">{error}</p>}
+      {error && <><p role="alert">{error}</p><button className="secondary" disabled={loading} onClick={() => void load()}>Retry history</button></>}
       {loading ? <p role="status">Loading history...</p> : !error && (appointments.length === 0 ? <p>No appointments recorded yet.</p> :
         <ul className="appointment-list">{appointments.map(appointment => <li key={appointment.id}>
           <h3>{appointment.provider_name}</h3>
-          <p><time dateTime={appointment.starts_at}>{appointmentDate(appointment.starts_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time> - {appointmentDate(appointment.ends_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</p>
-          <p>Status: {appointment.status === 'no-show' ? 'No-show' : appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}</p>
-          <p>Confirmation #{appointment.id}</p>
+          <p className="appointment-when"><time dateTime={appointment.starts_at}>{whenLabel(appointment.starts_at, appointment.ends_at)}</time></p>
+          {/* shortcut: no year shown, fine within a term; add it if history spans years */}
+          <p className="appointment-meta">{appointment.status === 'no-show' ? 'No-show' : appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)} · Confirmation #{appointment.id}</p>
         </li>)}</ul>)}
     </div>
   </section>

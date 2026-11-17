@@ -93,7 +93,7 @@ export default function ProviderAvailability({ refreshVersion = 0, onChanged }: 
 
   return <section aria-labelledby="availability-title">
     <h2 id="availability-title"><button className="section-toggle" type="button" aria-expanded={expanded} aria-controls="availability-content" onClick={() => setExpanded(open => !open)}>
-      <span>Your availability{!loading ? ` (${slots.length})` : ''}</span><span aria-hidden="true">{expanded ? '-' : '+'}</span>
+      <span>Your availability{!loading ? ` (${slots.length})` : ''}</span>
     </button></h2>
     <div id="availability-content" hidden={!expanded}>
       <p>Add or edit 30-minute times clients can book. Times use your device's local time zone.</p>

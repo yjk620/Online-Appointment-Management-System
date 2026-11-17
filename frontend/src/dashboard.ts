@@ -33,3 +33,26 @@ export function filterProviders<T extends { id: number; name: string; descriptio
   return providers.filter(provider => `${provider.name} ${provider.description}`.toLocaleLowerCase().includes(term)
     && (!availableOnly || available.has(provider.id)))
 }
+
+// "Wed, Nov 18 · 8:00 – 8:30 AM" in the viewer's locale and time zone.
+export function whenLabel(starts_at: string, ends_at: string) {
+  const start = dateValue(starts_at)
+  return `${start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} · ${new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).formatRange(start, dateValue(ends_at))}`
+}
+
+// "in 25 minutes", "in 3 hours" (later today), "tomorrow", "in 2 days" (calendar days, so DST-safe).
+export function relativeLabel(starts_at: string, now = Date.now()) {
+  const format = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
+  const start = dateValue(starts_at)
+  const minutes = Math.round((start.getTime() - now) / 60000)
+  if (minutes < 60) return format.format(minutes, 'minute')
+  const today = new Date(now)
+  const days = Math.round((new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86400000)
+  return days === 0 ? format.format(Math.round(minutes / 60), 'hour') : format.format(days, 'day')
+}
+
+// "Eastern Time" for America/Toronto; falls back to the IANA name.
+export function timeZoneLabel() {
+  return new Intl.DateTimeFormat(undefined, { timeZoneName: 'longGeneric' }).formatToParts(new Date()).find(part => part.type === 'timeZoneName')?.value
+    ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+}
