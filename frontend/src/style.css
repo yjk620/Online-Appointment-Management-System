@@ -198,7 +198,6 @@ header > a { white-space: nowrap; }
 .slot-links { display: inline-flex; align-items: center; gap: 4px; color: #626264; }
 /* Short words like Edit get a 44px-wide hit area too (HIG buttons: 44x44 pt). */
 .slot-links button.link { min-width: 44px; justify-content: center; }
-.slot-note { margin: 12px 0 0; color: #626264; font-size: 13px; }
 button.link.danger { color: #a12c2c; text-decoration-color: #a12c2c; }
 
 /* Status tags: colour always paired with a word. Text/background contrast is 4.5:1 or better. */
@@ -208,5 +207,4 @@ button.link.danger { color: #a12c2c; text-decoration-color: #a12c2c; }
 .tag.grey { background: #ececec; color: #48484a; }
 .appointment-when.cancelled time { text-decoration: line-through; color: #626264; }
 .appointment-meta .soon { color: #203c2b; font-weight: 600; }
-.slot-state.locked svg { margin: 0 3px 0 1px; vertical-align: -1px; }
 .next-appointment .appointment-card + .appointment-card { margin-top: 12px; }

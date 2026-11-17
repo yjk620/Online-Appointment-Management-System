@@ -78,22 +78,17 @@ export default function ProviderAvailability({ slots, appointments, onChanged }:
       <ul>{group.items.map(slot => <li key={slot.id} className={editing?.id === slot.id ? 'editing' : undefined}>
         <span className="slot-time">{timeRange(slot.starts_at, slot.ends_at)}</span>
         {slot.booked ? <span className="slot-state booked">Booked{slot.client ? ` · ${slot.client}` : ''}</span> : <>
-          {slot.locked ? <span className="slot-state locked">
-            Open · <svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d="M5 7V5a3 3 0 0 1 6 0v2h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm1.5 0h3V5a1.5 1.5 0 0 0-3 0z"/></svg>Locked
-                </span> : <span className="slot-state">Open</span>}
-          {/* Slots with any booking history can't be changed (API rule), so they get no links. */}
+          <span className="slot-state">Open</span>
           {/* Confirming swaps the links in place: red Remove takes Edit's spot, so a double-click lands on Keep. */}
-          {!slot.locked && (removing === slot.id ? <span className="slot-links">
+          {removing === slot.id ? <span className="slot-links">
             <button type="button" className="link danger" disabled={busy} onClick={() => void remove(slot)} aria-label={`Confirm remove ${whenLabel(slot.starts_at, slot.ends_at)}`}>{busy ? 'Removing...' : 'Remove'}</button>
             <button type="button" className="link" disabled={busy} onClick={() => setRemoving(null)}>Keep</button>
           </span> : <span className="slot-links">
             <button type="button" className="link" disabled={busy} onClick={() => edit(slot)} aria-label={`Edit ${whenLabel(slot.starts_at, slot.ends_at)}`}>Edit</button>
             <button type="button" className="link" disabled={busy} onClick={() => { setRemoving(slot.id); setNotice('') }} aria-label={`Remove ${whenLabel(slot.starts_at, slot.ends_at)}`}>Remove</button>
-          </span>)}
+          </span>}
         </>}
       </li>)}</ul>
     </div>)}
-    {days.some(group => group.items.some(slot => !slot.booked && slot.locked)) &&
-      <p className="slot-note">Locked times had a booking that was cancelled. Clients can still book them, but you can't edit or remove them.</p>}
   </section>
 }

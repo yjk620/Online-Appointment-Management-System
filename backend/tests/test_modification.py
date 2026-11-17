@@ -14,7 +14,7 @@ class AppointmentModificationTest(unittest.TestCase):
     def add_slot(self, slot_id, provider_id=3, days=2):
         start = datetime.now(timezone.utc) + timedelta(days=days)
         with closing(sqlite3.connect(self.database)) as db, db:
-            db.execute('INSERT INTO availability VALUES(?,?,?,?)', (slot_id, provider_id, start.isoformat(), (start + timedelta(minutes=30)).isoformat()))
+            db.execute('INSERT INTO availability(id,provider_id,starts_at,ends_at) VALUES(?,?,?,?)', (slot_id, provider_id, start.isoformat(), (start + timedelta(minutes=30)).isoformat()))
 
     def book(self, slot_id=1):
         return self.client.post('/api/appointments', json={'availability_id': slot_id}, headers=self.headers).json['appointment']['id']

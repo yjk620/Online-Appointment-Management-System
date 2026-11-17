@@ -48,7 +48,7 @@ def prevent_caching(response):
 def options():
     with closing(connect()) as db:
         providers = db.execute("SELECT u.id, u.name, p.description FROM users u JOIN provider_profiles p ON p.user_id=u.id WHERE u.role='provider' ORDER BY u.name,u.id").fetchall()
-        slots = db.execute("SELECT a.* FROM availability a JOIN users u ON u.id=a.provider_id JOIN provider_profiles p ON p.user_id=u.id WHERE u.role='provider' AND NOT EXISTS (SELECT 1 FROM appointments b WHERE b.availability_id=a.id AND b.status!='cancelled') ORDER BY julianday(a.starts_at),a.id").fetchall()
+        slots = db.execute("SELECT a.* FROM availability a JOIN users u ON u.id=a.provider_id JOIN provider_profiles p ON p.user_id=u.id WHERE u.role='provider' AND a.removed_at IS NULL AND NOT EXISTS (SELECT 1 FROM appointments b WHERE b.availability_id=a.id AND b.status!='cancelled') ORDER BY julianday(a.starts_at),a.id").fetchall()
     return jsonify(providers=[dict(p) for p in providers], slots=[dict(s) for s in slots if future_slot(s["starts_at"])])
 
 
@@ -79,7 +79,7 @@ def book():
         try:
             # Serialize validation and insertion so two requests cannot take one slot.
             db.execute("BEGIN IMMEDIATE")
-            slot = db.execute("SELECT a.*, u.name AS provider_name FROM availability a JOIN users u ON u.id=a.provider_id JOIN provider_profiles p ON p.user_id=u.id WHERE a.id=? AND u.role='provider'", (data["availability_id"],)).fetchone()
+            slot = db.execute("SELECT a.*, u.name AS provider_name FROM availability a JOIN users u ON u.id=a.provider_id JOIN provider_profiles p ON p.user_id=u.id WHERE a.id=? AND u.role='provider' AND a.removed_at IS NULL", (data["availability_id"],)).fetchone()
             if slot is None:
                 return jsonify(error="This time slot no longer exists."), 404
             if not future_slot(slot["starts_at"]):
@@ -148,7 +148,7 @@ def reschedule(appointment_id):
                 return jsonify(error="This appointment was not found."), 404
             if appointment["status"] != "scheduled" or not future_slot(appointment["starts_at"]):
                 return jsonify(error="Only upcoming scheduled appointments can be rescheduled."), 409
-            slot = db.execute("SELECT a.*, u.name AS provider_name FROM availability a JOIN users u ON u.id=a.provider_id JOIN provider_profiles p ON p.user_id=u.id WHERE a.id=? AND u.role='provider'", (data["availability_id"],)).fetchone()
+            slot = db.execute("SELECT a.*, u.name AS provider_name FROM availability a JOIN users u ON u.id=a.provider_id JOIN provider_profiles p ON p.user_id=u.id WHERE a.id=? AND u.role='provider' AND a.removed_at IS NULL", (data["availability_id"],)).fetchone()
             if slot is None:
                 return jsonify(error="This time slot no longer exists."), 404
             if slot["provider_id"] != appointment["provider_id"]:

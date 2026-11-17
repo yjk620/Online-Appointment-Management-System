@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS availability (
     provider_id INTEGER NOT NULL REFERENCES users(id),
     starts_at TEXT NOT NULL,
     ends_at TEXT NOT NULL,
+    -- Set when a provider removes a slot that has cancelled bookings; the row stays so those bookings keep their time.
+    removed_at TEXT,
     CHECK (starts_at < ends_at),
     UNIQUE (provider_id, starts_at)
 );

@@ -15,7 +15,7 @@ class AppointmentManagementTest(unittest.TestCase):
         with closing(sqlite3.connect(self.database)) as db, db:
             db.execute("INSERT INTO users VALUES(5,'Other provider','5@example.com','unused','provider')")
             start = datetime.now(timezone.utc) - timedelta(days=1)
-            db.execute('INSERT INTO availability VALUES(3,3,?,?)',
+            db.execute('INSERT INTO availability(id,provider_id,starts_at,ends_at) VALUES(3,3,?,?)',
                        (start.isoformat(), (start+timedelta(minutes=30)).isoformat()))
             db.execute("INSERT INTO appointments VALUES(1,1,3,'scheduled')")
             db.execute("INSERT INTO appointments VALUES(2,2,1,'cancelled')")

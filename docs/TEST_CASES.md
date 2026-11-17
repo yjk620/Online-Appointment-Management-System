@@ -41,7 +41,7 @@ future slots plus one past scheduled appointment in a disposable test database.
 | M02 | Client reschedules, then cancels | New time appears; cancelled row remains recorded and slot becomes bookable |
 | M03 | Provider views appointment screen and refreshes | Own bookings show client, date/time and status in order; another provider's do not appear |
 | M04 | Mark a past scheduled appointment Completed, another No-show; refresh client history | Updated statuses appear for both users; cancelled records remain unchanged |
-| M05 | Provider edits/removes an open slot, then tries a booked slot | Open slot changes appear to clients; booked slot changes are blocked (#11) |
+| M05 | Provider edits/removes an open slot (including one with a cancelled booking), then tries a booked slot | Open slot changes appear to clients and cancelled bookings keep their time; booked slot changes are blocked (#11, #64) |
 | M06 | Repeat provider workflows on narrow/mobile viewport and with keyboard | Controls have labels, focus is usable, messages are readable, layout does not overflow |
 
 Record date, tester, build/commit, pass/fail and any defect link when these manual

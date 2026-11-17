@@ -52,13 +52,12 @@ export function whenLabel(starts_at: string, ends_at: string) {
   return `${dayLabel(starts_at)} · ${timeRange(starts_at, ends_at)}`
 }
 
-// Booked slots get the client's name; any booking ever made (even cancelled) locks the slot,
-// matching the API's edit/remove rule. Matching on starts_at is safe: one slot per provider per start time.
+// Booked slots get the client's name. Matching on starts_at is safe: one slot per provider per start time.
 export function slotDetails<S extends { starts_at: string; booked: boolean }>(slots: S[], appointments: { starts_at: string; status: string; client_name: string }[]) {
-  return slots.map(slot => {
-    const matches = appointments.filter(item => item.starts_at === slot.starts_at)
-    return { ...slot, client: slot.booked ? matches.find(item => item.status !== 'cancelled')?.client_name : undefined, locked: matches.length > 0 }
-  })
+  return slots.map(slot => ({
+    ...slot,
+    client: slot.booked ? appointments.find(item => item.starts_at === slot.starts_at && item.status !== 'cancelled')?.client_name : undefined,
+  }))
 }
 
 // Consecutive items on the same local day, in the order given.
