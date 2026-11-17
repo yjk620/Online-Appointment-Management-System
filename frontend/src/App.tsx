@@ -17,7 +17,7 @@ const authHeaders = { 'Content-Type': 'application/json', 'X-Requested-With': 'A
 
 export default function App() {
   const [upcomingOpen, setUpcomingOpen] = useState(true)
-  const [bookingOpen, setBookingOpen] = useState(false)
+  const [bookingOpen, setBookingOpen] = useState(true)
   const [bookingChoice, setBookingChoice] = useState<{ id: number } | null>(null)
   const [appointmentsVersion, setAppointmentsVersion] = useState(0)
   const [adminVersion, setAdminVersion] = useState(0)
@@ -122,24 +122,35 @@ export default function App() {
   return (
     <>
       <header><a href="/">Appointment Desk</a></header>
-      <main>
+      <main className={user?.role === 'client' ? 'wide' : undefined}>
         {checkingSession ? <p role="status">Checking your session…</p> : sessionError ? (
           <><p role="alert">Could not check your session. Please try again.</p><button onClick={() => window.location.reload()}>Retry</button></>
         ) : user ? (
           <>
-            <h1>{user.role === 'admin' ? 'Admin' : user.role === 'provider' ? 'Provider' : 'Client'} home</h1>
-            <p>Welcome, {user.name}.</p>
-            <p>You are signed in as {user.email}.</p>
-            {user.role === 'client' ? <>
+            {user.role === 'client' ? <div className="client-greeting">
+              <h1>Hi, {user.name.trim().split(/\s+/)[0]}.</h1>
+              <p>{user.email} · <button type="button" className="link-button" disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button></p>
+            </div> : <>
+              <h1>{user.role === 'admin' ? 'Admin' : 'Provider'} home</h1>
+              <p>Welcome, {user.name}.</p>
+              <p>You are signed in as {user.email}.</p>
+            </>}
+            {user.role === 'client' ? <div className="client-board">
+              <div className="client-main">
               <ClientSummary refreshVersion={appointmentsVersion}
                 onRefresh={() => setAppointmentsVersion(value => value + 1)}
                 onBook={() => { setBookingOpen(true); window.setTimeout(() => document.getElementById('booking-title')?.scrollIntoView({ block: 'start' }), 0) }}
                 onHistory={() => { setHistoryRequest(value => value + 1); window.setTimeout(() => document.getElementById('history-title')?.scrollIntoView({ block: 'start' }), 0) }} />
               <UpcomingAppointments refreshVersion={appointmentsVersion} expanded={upcomingOpen} onToggle={() => setUpcomingOpen(open => !open)} onChanged={() => setAppointmentsVersion(version => version + 1)} />
-              <AppointmentHistory refreshVersion={appointmentsVersion} openRequest={historyRequest} />
-              <Providers refreshVersion={appointmentsVersion} onBook={id => { setBookingChoice({ id }); setBookingOpen(true) }} />
+              </div>
+              <div className="client-side">
               <Booking refreshVersion={appointmentsVersion} chosenProvider={bookingChoice} expanded={bookingOpen} onToggle={() => setBookingOpen(open => !open)} onBooked={() => { setAppointmentsVersion(version => version + 1); setUpcomingOpen(true) }} />
-            </> : user.role === 'admin' ? <>
+              <Providers refreshVersion={appointmentsVersion} onBook={id => { setBookingChoice({ id }); setBookingOpen(true) }} />
+              </div>
+              <div className="client-history">
+              <AppointmentHistory refreshVersion={appointmentsVersion} openRequest={historyRequest} />
+              </div>
+            </div> : user.role === 'admin' ? <>
               <AdminSummary refreshVersion={adminVersion} />
               <ProviderApplications onDecided={() => setAdminVersion(version => version + 1)} />
               <AdminUsers refreshVersion={adminVersion} />
@@ -148,7 +159,7 @@ export default function App() {
               <ProviderAvailability refreshVersion={providerVersion} onChanged={() => setProviderVersion(value => value + 1)} />
             </>}
             {error && <p role="alert">{error}</p>}
-            <button disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button>
+            {user.role !== 'client' && <button disabled={submitting} onClick={() => void logout()}>{submitting ? 'Signing out…' : 'Sign out'}</button>}
           </>
         ) : onDashboard ? <p role="status">Redirecting to sign in…</p> : onLoginPage ? (
           <>

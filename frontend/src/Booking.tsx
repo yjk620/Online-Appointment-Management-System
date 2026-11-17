@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
+import { timeZoneNote } from './dashboard'
 
 type Provider = { id: number; name: string; description: string }
 type Slot = { id: number; provider_id: number; starts_at: string; ends_at: string }
@@ -97,7 +98,7 @@ export default function Booking({ refreshVersion, chosenProvider, onBooked, expa
       <span>Book an appointment</span><span aria-hidden="true">{expanded ? '-' : '+'}</span>
     </button></h2>
     <div id="booking-content" hidden={!expanded}>
-    <p>Times are shown in your device's local time zone.</p>
+    <p className="time-zone-note">{timeZoneNote()}</p>
     {error && <p role="alert">{error}</p>}
     {confirmed && <div role="status"><h3>Appointment booked</h3><p>{confirmed.provider_name}</p><p>{dateLabel(confirmed.starts_at)} - {dateLabel(confirmed.ends_at)}</p><p>Confirmation #{confirmed.id} - {confirmed.status}</p></div>}
     {loading ? <p role="status">Loading available times...</p> : providers.length === 0 ? <p>No providers are available yet.</p> : <form onSubmit={submit}>

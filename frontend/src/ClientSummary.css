@@ -1,4 +1,32 @@
-.client-summary { margin-block: 24px 28px; }
-.client-summary-actions { display: grid; gap: 12px; margin-top: 20px; }
-.client-summary-actions .appointment-actions { margin: 0; }
-.client-summary-actions button { padding: 12px 14px; line-height: 1.4; }
+/* Client home (#60): greeting row, next-appointment card, two columns on wide screens. */
+main.wide { width: min(1120px, calc(100% - 48px)); margin-top: clamp(40px, 7vh, 72px); }
+@media (max-width: 540px) { main.wide { width: calc(100% - 40px); } }
+
+.client-greeting { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 24px; }
+.client-greeting h1 { margin: 0; }
+.client-greeting p { margin: 0; color: #626264; font-size: 14px; overflow-wrap: anywhere; }
+
+.client-board { display: grid; gap: 28px; margin-top: 28px; align-items: start; }
+.client-board > div { min-width: 0; }
+.client-board section + section { margin-top: 28px; }
+.client-board h2 { margin: 0 0 12px; }
+@media (min-width: 900px) {
+  .client-board { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 40px; }
+  .client-history { grid-column: 1 / -1; }
+}
+
+.client-summary { padding: 20px; border: 1px solid #d4d4d2; border-radius: 12px; background: #f6f8f6; }
+.client-summary h2 { margin: 0 0 8px; color: #626264; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.client-summary p { margin: 0; }
+.client-summary .next-provider { font-size: 22px; font-weight: 600; color: #1d1d1f; }
+.client-summary .next-time { margin-top: 4px; font-size: 16px; }
+.client-summary .next-count { margin-top: 8px; color: #313133; font-size: 14px; }
+.client-summary .appointment-actions { margin-top: 16px; }
+.client-summary .link-button { margin-top: 4px; }
+
+.time-zone-note { color: #626264; font-size: 13px; }
+.client-summary .time-zone-note { margin-top: 4px; }
+
+button.link-button { width: auto; min-height: 44px; padding: 0 4px; background: none; color: #203c2b; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+button.link-button:hover { background: none; text-decoration-thickness: 2px; }
+.client-greeting button.link-button { min-height: 28px; padding: 0; font-weight: 600; }

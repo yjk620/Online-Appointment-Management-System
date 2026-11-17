@@ -23,3 +23,7 @@ test('empty and terminal-only client summaries have no next booking', () => {
 test('a changed or cancelled booking changes summary totals', () => {
   assert.equal(upcoming(appointments.map(item => item.id === 2 ? { ...item, status: 'cancelled' } : item), now).length, 1)
 })
+test('time zone note names the generic local zone', async () => {
+  const { timeZoneNote } = await import('../src/dashboard.ts')
+  assert.equal(timeZoneNote(new Date(now)), 'Times shown in Eastern Time.')
+})

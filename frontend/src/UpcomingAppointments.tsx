@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { timeZoneNote } from './dashboard'
 
 type Appointment = { id: number; provider_id: number; provider_name: string; starts_at: string; ends_at: string; status: string }
 type Slot = { id: number; provider_id: number; starts_at: string; ends_at: string }
@@ -81,7 +82,7 @@ export default function UpcomingAppointments({ refreshVersion, expanded, onToggl
       <span>Upcoming appointments{!loading && !error ? ` (${appointments.length})` : ''}</span><span aria-hidden="true">{expanded ? '-' : '+'}</span>
     </button></h2>
     <div id="upcoming-content" hidden={!expanded}>
-    <p>Times are shown in your device's local time zone.</p>
+    <p className="time-zone-note">{timeZoneNote()}</p>
     {notice && <p role="status" className="notice">{notice}</p>}
     {loading ? <p role="status">Loading your appointments...</p> : error ? <p role="alert">{error}</p> : appointments.length === 0 ? <p>You have no upcoming appointments. Choose a provider below to book one.</p> :
       <ul className="appointment-list">{appointments.map(item => <li key={item.id}>

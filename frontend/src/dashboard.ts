@@ -33,3 +33,14 @@ export function filterProviders<T extends { id: number; name: string; descriptio
   return providers.filter(provider => `${provider.name} ${provider.description}`.toLocaleLowerCase().includes(term)
     && (!availableOnly || available.has(provider.id)))
 }
+
+// "Eastern Time" rather than "EST"/"EDT"; older browsers without longGeneric fall back to the long name.
+export function timeZoneNote(date = new Date()) {
+  for (const timeZoneName of ['longGeneric', 'long'] as const) {
+    try {
+      const name = new Intl.DateTimeFormat(undefined, { timeZoneName }).formatToParts(date).find(part => part.type === 'timeZoneName')?.value
+      if (name) return `Times shown in ${name}.`
+    } catch { /* option not supported; try the next one */ }
+  }
+  return "Times shown in your device's time zone."
+}
