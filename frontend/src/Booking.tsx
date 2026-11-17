@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
 import './Providers.css'
-import { filterProviders, whenLabel } from './dashboard'
+import { filterProviders, timeRange, whenLabel } from './dashboard'
 
 type Provider = { id: number; name: string; description: string }
 type Slot = { id: number; provider_id: number; starts_at: string; ends_at: string }
@@ -143,7 +143,7 @@ export default function Booking({ refreshVersion, onBooked }: { refreshVersion: 
           <h3>Choose a time</h3>
           <div className="booking-times">{dailySlots.map(item => <button key={item.id} type="button" disabled={busy}
             aria-pressed={slot === String(item.id)} onClick={() => { setSlot(String(item.id)); setConfirmed(null) }}>
-            {slotDate(item.starts_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })} - {slotDate(item.ends_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}
+            {timeRange(item.starts_at, item.ends_at)}
           </button>)}</div>
           {dailySlots.length === 0 && <p>No times remain on this date. Choose another date.</p>}
         </div>}
